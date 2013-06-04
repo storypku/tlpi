@@ -1,0 +1,26 @@
+Magic numbers required to use _reboot() system call from
+<linux/reboot.h> are listed as below:
+
+	#define	LINUX_REBOOT_MAGIC1		0xfee1dead
+	#define	LINUX_REBOOT_MAGIC2		672274793
+	#define	LINUX_REBOOT_MAGIC2A	85072278
+	#define	LINUX_REBOOT_MAGIC2B	369367448
+	#define	LINUX_REBOOT_MAGIC2C	537993216
+
+Using the following d2h.pl script to convert decimal numbers into hex.
+
+	#!/usr/bin/env perl
+	for ($i = 0; $i < @ARGV; $i++) {
+		printf("%d\t= 0x%08x\n", $ARGV[$i], $ARGV[$i]);
+	}
+
+Then we can get:
+
+	LINUX_REBOOT_MAGIC2		672274793		0x28121969
+	LINUX_REBOOT_MAGIC2A	85072278	 	0x05121996
+	LINUX_REBOOT_MAGIC2B	369367448		0x16041998
+	LINUX_REBOOT_MAGIC2C	537993216		0x20112000
+
+These hex values represent the birth dates of Linus and his three daughters
+in the format of "DDMMYYYY".
+
