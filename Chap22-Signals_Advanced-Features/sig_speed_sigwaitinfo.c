@@ -51,9 +51,7 @@ main(int argc, char *argv[])
             #else
                 if(sigwaitinfo(&blockedMask, NULL) == -1)
             #endif
-                errExit("sigwaitinfo");
-            //if (sigsuspend(&emptyMask) == -1 && errno != EINTR)
-            //        errExit("sigsuspend");
+                     errExit("sigwaitinfo");
         }
         exit(EXIT_SUCCESS);
 
@@ -64,7 +62,7 @@ main(int argc, char *argv[])
             #else
                 if(sigwaitinfo(&blockedMask, NULL) == -1)
             #endif
-                errExit("sigwaitinfo");
+                     errExit("sigwaitinfo");
             if (kill(childPid, TESTSIG) == -1)
                 errExit("kill");
         }
