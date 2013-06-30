@@ -1,0 +1,5 @@
+10015 	Jiaming 	Liu 	3 	3.52
+10016 	Xiao'ou 	He 	1 	3.98
+10017 	Lei 		Shi 	4 	3.69
+10018 	Jing  		Xu 	2 	3.92
+
