@@ -29,11 +29,11 @@ class _HashMapIterator:
     def next(self):
         while self._curPos < len(self._table):
             entry = self._table[self._curPos]
-            if entry is not HashMap.UNUSED and entry != HashMap.EMPTY:
+            if entry is HashMap.UNUSED or entry == HashMap.EMPTY:
                 self._curPos += 1
-                return entry
             else:
                 self._curPos += 1
+                return entry
         raise StopIteration
 
 class HashMap:
@@ -139,9 +139,10 @@ class HashMap:
         self._maxCount = newSize - newSize//3
 
         for entry in origTable:
-            slot = self._findSlot(entry.key, True)
-            self._table[slot] = entry
-            self._count += 1
+            if entry is not HashMap.UNUSED and entry != HashMap.EMPTY:
+                slot = self._findSlot(entry.key, True)
+                self._table[slot] = entry
+                self._count += 1
 
     # slot = (h(key) + i*hp(key)) % M
     def _hash1(self, key):
@@ -151,3 +152,14 @@ class HashMap:
     def _hash2(self, key):
         """ The second hash function used with double hashing probes. """
         return 1 + abs(hash(key)) % (len(self._table) - 2)
+
+if __name__ == "__main__":
+    mm = HashMap()
+    mm.add(3, 33)
+    mm.add(5, 55)
+    mm.add(7, 77)
+    mm.add(2, 22)
+    mm.add(6, 66)
+    mm.add(4, 44)
+    for ent in mm:
+        print ent.key, ent.value
