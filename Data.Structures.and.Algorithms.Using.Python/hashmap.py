@@ -5,6 +5,7 @@ from array_m import Array
 
 class _MapEntry:
     """ storage class for HashMap """
+
     def __init__(self, key, value):
         self.key = key
         self.value = value
@@ -19,6 +20,7 @@ class _MapEntry:
 
 class _HashMapIterator:
     """ Iterator class for HashMap """
+
     def __init__(self, table):
         self._table = table
         self._curPos = 0
@@ -27,13 +29,15 @@ class _HashMapIterator:
         return self
 
     def next(self):
+        """ Iterator's next() method for iteration """
+
         while self._curPos < len(self._table):
             entry = self._table[self._curPos]
             if entry is HashMap.UNUSED or entry == HashMap.EMPTY:
                 self._curPos += 1
             else:
                 self._curPos += 1
-                return entry
+                return entry.key
         raise StopIteration
 
 class HashMap:
@@ -61,6 +65,7 @@ class HashMap:
     def add(self, key, value):
         """ Adds a new entry to the map if the key doesn't exist. Otherwise,
         the new value replaces the current value associated with the key """
+
         if key in self:
             slot = self._findSlot(key, False)
             self._table[slot].value = value
@@ -84,12 +89,14 @@ class HashMap:
 
     def valueOf(self, key):
         """ Returns the value associated with the key. """
+
         slot = self._findSlot(key, False)
         assert slot is not None, "Invalid map key."
         return self._table[slot].value
 
     def remove(self, key):
         """ Removes the entry associated with the key. """
+
         slot = self._findSlot(key, False)
         assert slot is not None, "Invalid map key."
         self._table[slot] = HashMap.EMPTY
@@ -102,7 +109,9 @@ class HashMap:
         """ Find the slot containing the key or where the key can be added.
         forInsert indicates if the search is for the insertion, which locates
         the slot into which the new key can be added."""
+
         assert key is not None, "Can't use None as the search key"
+
         # Computes the home slot and the step size
         origSlot = self._hash1(key)
         step = self._hash2(key)
@@ -110,6 +119,7 @@ class HashMap:
         # Probe for the key
         slot = origSlot
         tabSize = len(self._table)
+
         while self._table[slot] is not HashMap.UNUSED:
             if forInsert and self._table[slot] == HashMap.EMPTY:
                 return slot
@@ -118,9 +128,10 @@ class HashMap:
                 return slot
             else:
                 slot = (slot + step) % tabSize
+                # To avoid the infinite loop when no UNUSED slot exists
                 if slot == origSlot and not forInsert:
-                    # To avoid the infinite loop when no UNUSED slot exists
                     return None
+
         if forInsert:
             return slot
         else:
@@ -152,14 +163,3 @@ class HashMap:
     def _hash2(self, key):
         """ The second hash function used with double hashing probes. """
         return 1 + abs(hash(key)) % (len(self._table) - 2)
-
-if __name__ == "__main__":
-    mm = HashMap()
-    mm.add(3, 33)
-    mm.add(5, 55)
-    mm.add(7, 77)
-    mm.add(2, 22)
-    mm.add(6, 66)
-    mm.add(4, 44)
-    for ent in mm:
-        print ent.key, ent.value
