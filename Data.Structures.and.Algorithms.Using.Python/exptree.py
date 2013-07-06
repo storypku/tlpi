@@ -1,6 +1,6 @@
 from llistqueue import Queue
 class ExpressionTree:
-    """ Expression Tree Class with assuming the following constraints:
+    """ Expression Tree Class with the following constraints assumed:
         (1) The expression is stored in string with no white space
         (2) The supplied expression is valid and fully parenthesized
         (3) each operand will be a single-digit or single-letter variable
