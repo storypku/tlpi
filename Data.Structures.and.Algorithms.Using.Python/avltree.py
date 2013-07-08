@@ -161,9 +161,74 @@ class AVLMap:
             pivot = self._avlRotateLeft(pivot)
             return pivot
 
-    def _avlRemove(self, subtree, key):
-        """ Todo """
-        pass
+    def _avlRemove(self, subtree, target):
+        """Recursive method to handle the deletion from an AVL tree. The
+        function returns a tuple containing a reference to the root of the
+        subtree and a boolean to indicate if the subtree grew shorter."""
+        if target == subtree.key:
+            if subtree.left is None and subtree.right is None: # Leaf node
+                subtree = None
+                shorter = True
+            elif subtree.left is None:
+                subtree = subtree.right
+                shorter = True
+            elif subtree.right is None:
+                subtree = subtree.left
+                shorter = True
+            else:  # Interior node with two children both present
+                successor = self._bstMinimum(subtree.right)
+                subtree.key = successor.key
+                subtree.value = successor.value
+                (subtree.right, shorter) = self._avlRemove(subtree.right, \
+                        successor.key)
+                if shorter:
+                    if subtree.bfactor == LEFT_HIGH:
+                        if subtree.left.bfactor == EQUAL_HIGH:
+                            shorter = False
+                        else:
+                            shorter = True
+                        # TODO: Be careful!
+                        subtree = self._avlLeftBalance(subtree)
+                    elif subtree.bfactor == EQUAL_HIGH:
+                        subtree.bfactor = LEFT_HIGH
+                        shorter = False
+                    else:
+                        subtree.bfactor = EQUAL_HIGH
+                        shorter = True
+        elif target < subtree.key:
+            (subtree.left, shorter) = self._avlRemove(subtree.left, target)
+            if shorter:
+                if subtree.bfactor == LEFT_HIGH:
+                    subtree.bfactor = EQUAL_HIGH
+                    shorter = True
+                elif subtree.bfactor == EQUAL_HIGH:
+                    subtree.bfactor = RIGHT_HIGH
+                    shorter = False
+                else:  # RIGHT_HIGH, rebalance needed
+                    if subtree.right.bfactor == EQUAL_HIGH:
+                        shorter = False
+                    else:
+                        shorter = True
+                    # TODO: Be careful!
+                    subtree = self._avlRightBalance(subtree)
+        else: # target > subtree.key
+            (subtree.right, shorter) = self._avlRemove(subtree.right, target)
+            if shorter:
+                if subtree.bfactor == LEFT_HIGH:
+                    if subtree.left.bfactor == EQUAL_HIGH:
+                        shorter = False
+                    else:
+                        shorter = True
+                    # TODO: Be careful!
+                    subtree = self._avlLeftBalance(subtree)
+
+                elif subtree.bfactor == EQUAL_HIGH:
+                    subtree.bfactor = LEFT_HIGH
+                    shorter = False
+                else:   # RIGHT_HIGH
+                    subtree.bfactor = EQUAL_HIGH
+                    shorter = True
+        return (subtree, shorter)
 
     def _avlRotateRight(self, pivot):
         """Rotate the pivot to the right around its left child."""
@@ -178,6 +243,15 @@ class AVLMap:
         pivot.right = ccc.left
         ccc.left = pivot
         return ccc
+
+    def _bstMinimum(self, subtree):
+        """ Helper method for finding the node containing the minimum key. """
+        if subtree is None:
+            return None
+        elif subtree.left is None:
+            return subtree
+        else:
+            return self._bstMinimum(subtree.left)
 
     def breathFirstTrav(self):
         """Breath-first traversal of an AVL tree."""
