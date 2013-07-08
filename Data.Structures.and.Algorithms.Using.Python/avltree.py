@@ -118,14 +118,21 @@ class AVLMap:
             ccc.bfactor = EQUAL_HIGH
             pivot = self._avlRotateRight(pivot)
             return pivot
+        elif ccc.bfactor == EQUAL_HIGH: # May occur when entry removal
+            pivot.bfactor = LEFT_HIGH
+            ccc.bfactor = RIGHT_HIGH
+            pivot = self._avlRotateRight(pivot)
+            return pivot
         # Otherwise, a balance from the left is due to case 2: LR
         else:
             ggg = ccc.right
             if ggg.bfactor == LEFT_HIGH:
                 pivot.bfactor = RIGHT_HIGH
                 ccc.bfactor = EQUAL_HIGH
-            # ggg.bfactor == RIGHT_HIGH since != EQUAL_HIGH in this case
-            else:
+            elif ggg.bfactor == EQUAL_HIGH: # May occur when entry removal
+                pivot.bfactor = EQUAL_HIGH
+                ccc.bfactor = EQUAL_HIGH
+            else:   # RIGHT_HIGH
                 pivot.bfactor = EQUAL_HIGH
                 ccc.bfactor = LEFT_HIGH
             # Both cases above set ggg's balance factor to equal high
@@ -144,13 +151,20 @@ class AVLMap:
             ccc.bfactor = EQUAL_HIGH
             pivot = self._avlRotateLeft(pivot)
             return pivot
+        elif ccc.bfactor == EQUAL_HIGH: # May occur when entry removal
+            pivot.bfactor = RIGHT_HIGH
+            ccc.bfactor = LEFT_HIGH
+            pivot = self._avlRotateLeft(pivot)
+            return pivot
         # Otherwise, a balance from the left is due to case 4: RL
-        else:
+        else:   # LEFT_HIGH
             ggg = ccc.left
             if ggg.bfactor == LEFT_HIGH:
                 pivot.bfactor = EQUAL_HIGH
                 ccc.bfactor = RIGHT_HIGH
-            # ggg.bfactor == RIGHT_HIGH since != EQUAL_HIGH in this case
+            elif ggg.bfactor == EQUAL_HIGH: # May occur when entry removal
+                pivot.bfactor = EQUAL_HIGH
+                ccc.bfactor = EQUAL_HIGH
             else:
                 pivot.bfactor = LEFT_HIGH
                 ccc.bfactor = EQUAL_HIGH
@@ -181,53 +195,54 @@ class AVLMap:
                 subtree.value = successor.value
                 (subtree.right, shorter) = self._avlRemove(subtree.right, \
                         successor.key)
-                if shorter:
-                    if subtree.bfactor == LEFT_HIGH:
-                        if subtree.left.bfactor == EQUAL_HIGH:
-                            shorter = False
-                        else:
-                            shorter = True
-                        # TODO: Be careful!
-                        subtree = self._avlLeftBalance(subtree)
-                    elif subtree.bfactor == EQUAL_HIGH:
-                        subtree.bfactor = LEFT_HIGH
-                        shorter = False
-                    else:
-                        subtree.bfactor = EQUAL_HIGH
-                        shorter = True
+                (subtree, shorter) = self.__subsRChldShort(subtree, shorter)
+
         elif target < subtree.key:
             (subtree.left, shorter) = self._avlRemove(subtree.left, target)
-            if shorter:
-                if subtree.bfactor == LEFT_HIGH:
-                    subtree.bfactor = EQUAL_HIGH
-                    shorter = True
-                elif subtree.bfactor == EQUAL_HIGH:
-                    subtree.bfactor = RIGHT_HIGH
-                    shorter = False
-                else:  # RIGHT_HIGH, rebalance needed
-                    if subtree.right.bfactor == EQUAL_HIGH:
-                        shorter = False
-                    else:
-                        shorter = True
-                    # TODO: Be careful!
-                    subtree = self._avlRightBalance(subtree)
+            (subtree, shorter) = self.__subsLChldShort(subtree, shorter)
+
         else: # target > subtree.key
             (subtree.right, shorter) = self._avlRemove(subtree.right, target)
-            if shorter:
-                if subtree.bfactor == LEFT_HIGH:
-                    if subtree.left.bfactor == EQUAL_HIGH:
-                        shorter = False
-                    else:
-                        shorter = True
-                    # TODO: Be careful!
-                    subtree = self._avlLeftBalance(subtree)
+            (subtree, shorter) = self.__subsRChldShort(subtree, shorter)
 
-                elif subtree.bfactor == EQUAL_HIGH:
-                    subtree.bfactor = LEFT_HIGH
+        return (subtree, shorter)
+
+    def __subsLChldShort(self, subtree, shorter):
+        """Helper method to handle the case when <subtree>'s left sub-tree
+        becomes shorter. This func is for code simplicity purpose, should
+        never be used outside of the AVLMap class definition."""
+        if shorter:
+            if subtree.bfactor == LEFT_HIGH:
+                subtree.bfactor = EQUAL_HIGH
+                shorter = True
+            elif subtree.bfactor == EQUAL_HIGH:
+                subtree.bfactor = RIGHT_HIGH
+                shorter = False
+            else:  # RIGHT_HIGH, rebalancing needed
+                if subtree.right.bfactor == EQUAL_HIGH:
                     shorter = False
-                else:   # RIGHT_HIGH
-                    subtree.bfactor = EQUAL_HIGH
+                else:
                     shorter = True
+                subtree = self._avlRightBalance(subtree)
+        return (subtree, shorter)
+
+    def __subsRChldShort(self, subtree, shorter):
+        """Helper method to handle the case when <subtree>'s right sub-tree
+        becomes shorter. This func is for code simplicity purpose, should
+        never be used outside of the AVLMap class definition."""
+        if shorter:
+            if subtree.bfactor == LEFT_HIGH:
+                if subtree.left.bfactor == EQUAL_HIGH:
+                    shorter = False
+                else:
+                    shorter = True
+                subtree = self._avlLeftBalance(subtree)
+            elif subtree.bfactor == EQUAL_HIGH:
+                subtree.bfactor = LEFT_HIGH
+                shorter = False
+            else: # RIGHT_HIGH
+                subtree.bfactor = EQUAL_HIGH
+                shorter = True
         return (subtree, shorter)
 
     def _avlRotateRight(self, pivot):
@@ -257,14 +272,26 @@ class AVLMap:
         """Breath-first traversal of an AVL tree."""
         from llistqueue import Queue
         trQ = Queue()
+        if self._root is None:
+            print "<empty AVL tree>"
+            return
         trQ.enqueue(self._root)
         while not trQ.isEmpty():
             node = trQ.dequeue()
-            print "%4s %-4s" % (node.key, node.bfactor)
+            print node.key,
+            if node.bfactor == LEFT_HIGH:
+                print " >",
+            elif node.bfactor == EQUAL_HIGH:
+                print " =",
+            else:
+                print " <",
             if node.left is not None:
+                print "(L: ", node.left.key, ")",
                 trQ.enqueue(node.left)
             if node.right is not None:
+                print "(R: ", node.right.key, ")",
                 trQ.enqueue(node.right)
+            print ""
 
 class _AVLMapNode:
     """ Storage class for creating the AVL tree node. """
@@ -277,7 +304,18 @@ class _AVLMapNode:
 
 
 if __name__ == "__main__":
-    mmap = AVLMap()
-    for num in [60, 51, 7, 39, 46, 72, 83, 91, 100, 73]:
-        mmap.add(num, num * 2)
-    mmap.breathFirstTrav()
+    theMap = AVLMap()
+    KEYLIST = [60, 51, 7, 39, 46, 72, 83, 91, 100, 73, 54, 28, 41, 35, 77, 53]
+    print KEYLIST
+    print "==============="
+    theMap.breathFirstTrav()
+    print "==============="
+    for num in KEYLIST:
+        theMap.add(num, num * 2)
+        theMap.breathFirstTrav()
+        print "==============="
+    print "=================="
+    for item in KEYLIST:
+        theMap.remove(item)
+        theMap.breathFirstTrav()
+        print "==============="
