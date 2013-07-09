@@ -29,14 +29,54 @@ class Tree23Map:
 
     def __init__(self):
         self._root = None
+        self._size = 0
+
+    def __len__(self):
+        return self._size
+
+    def __contains__(self, key):
+        """See if the map contains the given key."""
+        assert key is not None, "Can't specify None as key."
+        return self._t23Search(self._root, key) is not None
+
+    def __getitem__(self, key):
+        assert key is not None, "Can't specify None as key."
+        node = self._t23Search(self._root, key)
+        if node is not None:
+            return node.getValue(key)
+        else:
+            raise KeyError, key
+
+    def __setitem__(self, key, value):
+        return self.add(key, value)
+
+    def add(self, key, value):
+        """Adds a kv pair into the 2-3 tree  or replaces the existing one if the
+        given key already exists."""
+        assert key is not None, "Can't specify None as key."
+        node = self._t23Search(self._root, key)
+        if node is not None:
+            # Key already exists, either key1 or key2 must be equal to it.
+            if node.key1 == key:
+                node.value1 = value
+            else:
+                node.value2 = value
+            return False
+        else:
+            self._t23Insert(key, value)
+            self._size += 1
+            return True
+
+    def __delitem__(self, key):
+        assert key is not None, "Can't specify None as key."
 
     def _t23Search(self, subtree, target):
         """Helper method to search the 2-3 tree for the given target key.
-        Returns the value associated with the key or None. """
+        Returns the reference to the node associated with the key or None. """
         if subtree is None:
             return None
         elif subtree.hasKey(target):
-            return subtree.getValue(target)
+            return subtree
         else:
             branch = subtree.getBranch(target)
             return self._t23Search(branch, target)
@@ -56,9 +96,6 @@ class Tree23Map:
 
     def _t23RecInsert(self, subtree, key, value):
         """Helper method to add the kv pair to subtree recursively."""
-        if subtree.hasKey(key):
-            # Should override the original value, to be implemented
-            return (None, None, None)
         if subtree.isLeaf():
             return self._t23AddToNode(subtree, key, value, None)
         else:
@@ -74,8 +111,71 @@ class Tree23Map:
             else:
                 return self._t23AddToNode(subtree, pKey, pValue, pRef)
 
-    def _t23AddToNode(self, subtree, key, value, ref):
-        
+    def _t23AddToNode(self, subtree, key, value, pRef):
+        """Handle the insertion of a kv pair to a node denoted by <subtree>.
+        if pRef is None, then the insertion is into an leaf node; otherwise,
+        it is performed on an interior node (pRef is a reference to the new
+        node generated when one of <subtree>'s children splits."""
+        if subtree.isFull():
+            return self._t23SplitNode(subtree, key, value, pRef)
+        else:
+            if key < subtree.key1:
+                subtree.key2 = subtree.key1
+                subtree.value2 = subtree.value1
+                subtree.key1 = key
+                subtree.value1 = value
+                if pRef is not None:
+                    subtree.right = subtree.middle
+                    subtree.middle = pRef
+            else:   # key > subtree.key1
+                subtree.key2 = key
+                subtree.value2 = value
+                if pRef is not None:
+                    subtree.right = pRef
+            return (None, None, None)
+
+    def _t23SplitNode(self, node, key, value, pRef):
+        """Splits a full non-root node denoted by <node> and returns a tuple
+        with the promoted key and reference."""
+        # Create the new node, the reference to which will be promoted.
+        newNode = _T23Node(None, None)
+        if key < node.key1: # Left
+            pKey = node.key1
+            pValue = node.value1
+            node.key1 = key
+            node.value1 = value
+            newNode.key1 = node.key2
+            newNode.value1 = node.value2
+            # pRef comes from split of the left child of interiror <node>
+            if pRef is not None:
+                newNode.middle = node.right
+                newNode.left = node.middle
+                node.middle = pRef
+                node.right = None
+        elif key < node.key2:   # Middle
+            pKey = key
+            pValue = value
+            newNode.key1 = node.key2
+            newNode.value1 = node.value2
+            # pRef comes from split of the middle child of interiror <node>
+            if pRef is not None:
+                newNode.middle = node.right
+                newNode.left = pRef
+                node.right = None
+        else:   # Right
+            pKey = node.key2
+            pValue = node.value2
+            newNode.key1 = key
+            newNode.key2 = value
+            # pRef comes from split of the right child of interiror <node>
+            if pRef is not None:
+                newNode.left = node.right
+                newNode.middle = pRef
+                node.right = None
+        node.key2 = None
+        node.value2 = None
+        return (pKey, pValue, newNode)
+
 class _T23Node(object):
     """storage class for creating the 2-3 tree nodes."""
 
@@ -124,3 +224,17 @@ class _T23Node(object):
             return self.middle
         else:
             return self.right
+
+if __name__ == "__main__":
+    from random import randint
+    LLIST = list()
+    for times in range(50):
+        LLIST.append(randint(1, 100))
+    print "===", len(LLIST), "==="
+    TTMAP = Tree23Map()
+    for num in LLIST:
+        TTMAP.add(num, num * 2)
+        TTMAP.add(num, num * 10)
+    print "===", len(TTMAP), "===="
+    for num in LLIST:
+        print num, TTMAP[num]
