@@ -29,6 +29,9 @@ and (b) all keys greater than the second key are stored in the right
 subtree.
 
 """
+
+from lliststack import Stack
+
 class Tree23Map:
     """Implementation of the Map ADT using an 2-3 tree. """
 
@@ -72,9 +75,174 @@ class Tree23Map:
             self._size += 1
             return True
 
-    def __delitem__(self, key):
-        assert key is not None, "Can't specify None as key."
-        pass
+    def __delitem__(self, target):
+        assert target is not None, "Can't specify None as key."
+        keyFound = False
+        nodeTrack = Stack()
+
+        node = self._root
+        while node is not None:
+            nodeTrack.push(node)
+            if node.hasKey(target):
+                keyFound = True
+                break
+            else:
+                node = node.getBranch(target)
+
+        if not keyFound:   # If target key not found...
+            raise KeyError(target)
+        # If the target node is not a leaf node, swap item with its in-order
+        # successor (always leaf), and then go to the new location of item
+        # to delete.
+        if not nodeTrack.peek().isLeaf():
+            transNode = nodeTrack.peek()
+            if transNode.key1 == target:
+                node = transNode.middle
+            else:
+                node = transNode.right
+            nodeTrack.push(node)
+            while not node.isLeaf():
+                node = node.left
+                nodeTrack.push(node)
+            # <node> is anow the leaf node containing the in-order successor
+            # key of <target>.
+            if transNode.key1 == target:
+                transNode.key1, node.key1 = node.key1, transNode.key1
+                transNode.value1, node.value1 = node.value1, transNode.value1
+            else:
+                transNode.key2, node.key1 = node.key1, transNode.key2
+                transNode.value2, node.value1 = node.value1, transNode.value2
+
+        leafNode = nodeTrack.pop()
+        if leafNode.isFull():
+            self._t23DelFromFullNode(leafNode, target)
+        else:
+            leafNode.key1 = None
+            leafNode.value1 = None
+            self._t23FixNode(nodeTrack, leafNode)
+
+        self._size -= 1
+
+    def _t23DelFromFullNode(self, fullNode, target):
+        """Helper method to delete <target> key from <fullNode>."""
+        if fullNode.key2 == target:
+            fullNode.key2 = None
+            fullNode.value2 = None
+        else: # fullNode.key1 == target:
+            fullNode.key1 = fullNode.key2
+            fullNode.value1 = fullNode.value2
+            fullNode.key2 = None
+            fullNode.value2 = None
+
+    def _t23FixNode(self, nodeTrack, tgtNode):
+        """Completes the deletion when <node> is empty by either removing the
+        root, redistributing values, or merging nodes. Note that if <node> is
+        internal, it has only one child."""
+        # If tgtNode is _root, remove the root and set the new root pointer
+        if nodeTrack.isEmpty():
+            self._root = tgtNode.left
+            return
+        parent = nodeTrack.pop()
+        # Handle Redistributes and merges for a 2-node parent.
+        if not parent.isFull():
+            if parent.left is tgtNode and parent.right.isFull():
+                sibling = parent.right
+                tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
+                parent.key1, parent.value1 = sibling.key1, sibling.value1
+                self._t23DelFromFullNode(sibling, sibling.key1)
+                if not tgtNode.isLeaf():
+                    tgtNode.middle = sibling.left
+                    sibling.left = sibling.middle
+                    sibling.middle = sibling.right
+                    sibling.right = None
+            elif parent.right is tgtNode and parent.left.isFull():
+                sibling = parent.left
+                tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
+                parent.key1, parent.value1 = sibling.key2, sibling.value2
+                self._t23DelFromFullNode(sibling, sibling.key2)
+                if not tgtNode.isLeaf():
+                    tgtNode.middle = tgt.left
+                    tgtNode.left = sibling.right
+                    sibling.right = None
+            elif parent.left is tgtNode and not parent.right.isFull():
+                sibling = parent.right
+                tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
+                tgtNode.key2, tgtNode.value2 = sibling.key1, sibling.value1
+                parent.key1, parent.value1 = None, None
+                parent.middle = None
+                if not tgtNode.isLeaf():
+                    tgtNode.middle, tgtNode.right = sibling.left, sibling.middle
+                self._t23FixNode(nodeTrack, parent)
+            else: # parent.right is tgtNode and not parent.left.isFull()
+                sibling = parent.left
+                sibling.key2, sibling.value2 = parent.key1, parent.value1
+                parent.key1, parent.value1 = None, None
+                parent.middle = None
+                if not tgtNode.isLeaf():
+                    sibling.right = tgtNode.left
+                self._t23FixNode(nodeTrack, parent)
+        else:   # If parent.isFull()
+            if parent.left is tgtNode:
+                if parent.middle.isFull():
+                    sibling = parent.middle
+                    tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
+                    parent.key1, parent.value1 = sibling.key1, sibling.value1
+                    self._t23DelFromFullNode(sibling, sibling.key1)
+                    if not tgtNode.isLeaf():
+                        tgtNode.middle = sibling.left
+                        sibling.left = sibling.middle
+                        sibling.middle = sibling.right
+                        sibling.right = None
+                elif parent.right.isFull():
+                    sibling = parent.right
+                    assist = parent.middle
+                    tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
+                    parent.key1, parent.value1 = assist.key1, assist.value1
+                    assist.key1, assist.value1 = parent.key2, parent.value2
+                    parent.key2, parent.value2 = sibling.key1, sibling.value1
+                    self._t23DelFromFullNode(sibling, sibling.key1)
+                    if not tgtNode.isLeaf():
+                        tgtNode.middle = assist.left
+                        assist.left = assist.middle
+                        assist.middle = sibling.left
+                        sibling.left = sibling.middle
+                        sibling.middle = sibling.right
+                        sibling.right = None
+                else:
+                    sibling = parent.right
+                    assist = parent.middle
+                    tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
+                    tgtNode.key2, tgtNode.value2 = assist.key1, assist.value1
+                    self._t23DelFromFullNode(parent, parent.key1)
+                    parent.middle, parent.right = sibling, None
+                    if not tgtNode.isLeaf():
+                        tgtNode.middle = assist.left
+                        tgtNode.right = assist.middle
+            elif parent.middle is tgtNode:
+                if parent.right.isFull():
+                    sibling = parent.right
+                    tgtNode.key1, tgtNode.value1 = parent.key2, parent.value2
+                    parent.key2, parent.value2 = sibling.key1, sibling.value1
+                    self._t23DelFromFullNode(sibling, sibling.key1)
+                    if not tgtNode.isLeaf():
+                        tgtNode.middle = sibling.left
+                        sibling.left = sibling.middle
+                        sibling.middle = sibling.right
+                        sibling.right = None
+                elif parent.left.isFull():
+                    sibling = parent.left
+                    tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
+                    parent.key1, parent.value1 = sibling.key2, sibling.value2
+                    self._t23DelFromFullNode(sibling, sibling.key2)
+                    if not tgtNode.isLeaf():
+                        tgtNode.middle = tgtNode.left
+                        tgtNode.left = sibling.right
+                        sibling.right = None
+                else:
+                    sibling = parent.left
+                    pass
+            else: # parent.right is tgtNode
+                pass
 
     def _t23Search(self, subtree, target):
         """Helper method to search the 2-3 tree for the given target key.
@@ -181,6 +349,10 @@ class Tree23Map:
         node.key2 = None
         node.value2 = None
         return (pKey, pValue, newNode)
+
+    def remove(self, key):
+        """Romove the entry associated with the given key from the Map."""
+        self.__delitem__(key)
 
 class _T23Node(object):
     """storage class for creating the 2-3 tree nodes."""
