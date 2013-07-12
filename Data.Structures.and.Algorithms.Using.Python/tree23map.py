@@ -3,25 +3,30 @@
 A 2-3 tree is a search tree that is always balanced and whose shape and
 structure is defined as follows:
 
-1)  Every node has capacity for one or two keys (and their corresponding
-    payload), which we term key one and key two.
-2)  Every node has capacity for two or three children, which we term the left,
-    middle, and right child.
-3)  All leaf node are at the same level.
-4)  Every internal node must contain two or three children. If the node has
-    one key, it must contain two children; if it has two keys, it must contain
-    three children.
+1) Every node has capacity for one or two keys (and their corresponding
+payload), which we term key one and key two.
+
+2) Every node has capacity for two or three children, which we term the left,
+middle, and right child.
+
+3) All leaf node are at the same level.
+
+4) Every internal node must contain two or three children. If the node has
+one key, it must contain two children; if it has two keys, it must contain
+three children.
 
 For each interior node, V:
 
-1)  All keys less than the first key of node V are stored in the left subtree
-    of V.
-2)  If the node has two children, all keys greater thant the first key of node
-    V are stored in the middle subtree of V.
-3)  If the node has three children: (a) all keys greater than the first key of
-    node V but less than the second key are stored in the middle subtree of V;
-    and (b) all keys greater than the second key are stored in the right
-    subtree.
+1) All keys less than the first key of node V are stored in the left subtree
+of V.
+
+2) If the node has two children, all keys greater thant the first key of node
+V are stored in the middle subtree of V.
+
+3) If the node has three children: (a) all keys greater than the first key of
+node V but less than the second key are stored in the middle subtree of V;
+and (b) all keys greater than the second key are stored in the right
+subtree.
 
 """
 class Tree23Map:
@@ -36,22 +41,22 @@ class Tree23Map:
 
     def __contains__(self, key):
         """See if the map contains the given key."""
-        assert key is not None, "Can't specify None as key."
+        assert key is not None, "Invalid map key."
         return self._t23Search(self._root, key) is not None
 
     def __getitem__(self, key):
-        assert key is not None, "Can't specify None as key."
+        assert key is not None, "Invalid map key."
         node = self._t23Search(self._root, key)
         if node is not None:
             return node.getValue(key)
         else:
-            raise KeyError, key
+            raise KeyError(key)
 
     def __setitem__(self, key, value):
         return self.add(key, value)
 
     def add(self, key, value):
-        """Adds a kv pair into the 2-3 tree  or replaces the existing one if the
+        """Adds a kv pair into the 2-3 tree or replaces the existing one if the
         given key already exists."""
         assert key is not None, "Can't specify None as key."
         node = self._t23Search(self._root, key)
@@ -69,6 +74,7 @@ class Tree23Map:
 
     def __delitem__(self, key):
         assert key is not None, "Can't specify None as key."
+        pass
 
     def _t23Search(self, subtree, target):
         """Helper method to search the 2-3 tree for the given target key.
@@ -127,7 +133,7 @@ class Tree23Map:
                 if pRef is not None:
                     subtree.right = subtree.middle
                     subtree.middle = pRef
-            else:   # key > subtree.key1
+            else: # key > subtree.key1
                 subtree.key2 = key
                 subtree.value2 = value
                 if pRef is not None:
@@ -152,7 +158,7 @@ class Tree23Map:
                 newNode.left = node.middle
                 node.middle = pRef
                 node.right = None
-        elif key < node.key2:   # Middle
+        elif key < node.key2: # Middle
             pKey = key
             pValue = value
             newNode.key1 = node.key2
@@ -162,11 +168,11 @@ class Tree23Map:
                 newNode.middle = node.right
                 newNode.left = pRef
                 node.right = None
-        else:   # Right
+        else: # Right
             pKey = node.key2
             pValue = node.value2
             newNode.key1 = key
-            newNode.key2 = value
+            newNode.value1 = value
             # pRef comes from split of the right child of interiror <node>
             if pRef is not None:
                 newNode.left = node.right
