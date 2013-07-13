@@ -28,6 +28,48 @@ node V but less than the second key are stored in the middle subtree of V;
 and (b) all keys greater than the second key are stored in the right
 subtree.
 
+for the deletion operation, the pseudo code is as follows:
+
+    deletItem(itemtype item)
+        node = node where item exists (may be null if no item)
+
+        if (node)
+            if (item is not in a leaf)
+                swap item with in-order successor (always leaf)
+                leafNode = new location of item to delete
+            else
+                leafNode = node
+
+            delete item from leafNode
+
+            if (leafNode is now contains no items)
+                fix(leafNode)
+
+As for the fix(), it completes the deletion when node n is empty.
+
+    fix (Node *n, ...) // May need more parameters
+        if (n is the root)
+            remove the root
+            set new root pointer
+        else
+            let p be the parent of n
+            if (some sibling of n has two items)
+                distribute items appropriately among n, the sibling and the
+                parent (remember take from right first)
+                if (n is internal)
+                    move the appropriate child from sibling to n (May have to
+                    move many children if distributing across multiple
+                    siblings.)
+            else  // merge nodes
+                choose an adjacent sibling s of n (remember, merge left first)
+                bring the appropriate item down from p into s
+                if (n is internal)
+                    move n's child to s
+
+                remove node n
+                if (p is now empty)
+                    fix(p)
+
 """
 
 from lliststack import Stack
@@ -58,6 +100,9 @@ class Tree23Map:
     def __setitem__(self, key, value):
         return self.add(key, value)
 
+    def __iter__(self):
+        return _T23Iter(self._root)
+
     def add(self, key, value):
         """Adds a kv pair into the 2-3 tree or replaces the existing one if the
         given key already exists."""
@@ -76,7 +121,7 @@ class Tree23Map:
             return True
 
     def __delitem__(self, target):
-        assert target is not None, "Can't specify None as key."
+        assert target is not None, "Invalid map key."
         keyFound = False
         nodeTrack = Stack()
 
@@ -115,7 +160,7 @@ class Tree23Map:
 
         leafNode = nodeTrack.pop()
         if leafNode.isFull():
-            self._t23DelFromFullNode(leafNode, target)
+            self._t23DegFull(leafNode, target)
         else:
             leafNode.key1 = None
             leafNode.value1 = None
@@ -123,7 +168,7 @@ class Tree23Map:
 
         self._size -= 1
 
-    def _t23DelFromFullNode(self, fullNode, target):
+    def _t23DegFull(self, fullNode, target):
         """Helper method to delete <target> key from <fullNode>."""
         if fullNode.key2 == target:
             fullNode.key2 = None
@@ -145,35 +190,36 @@ class Tree23Map:
         parent = nodeTrack.pop()
         # Handle Redistributes and merges for a 2-node parent.
         if not parent.isFull():
-            if parent.left is tgtNode and parent.right.isFull():
-                sibling = parent.right
+            if parent.left is tgtNode and parent.middle.isFull():
+                sibling = parent.middle
                 tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
                 parent.key1, parent.value1 = sibling.key1, sibling.value1
-                self._t23DelFromFullNode(sibling, sibling.key1)
+                self._t23DegFull(sibling, sibling.key1)
                 if not tgtNode.isLeaf():
                     tgtNode.middle = sibling.left
                     sibling.left = sibling.middle
                     sibling.middle = sibling.right
                     sibling.right = None
-            elif parent.right is tgtNode and parent.left.isFull():
+            elif parent.middle is tgtNode and parent.left.isFull():
                 sibling = parent.left
                 tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
                 parent.key1, parent.value1 = sibling.key2, sibling.value2
-                self._t23DelFromFullNode(sibling, sibling.key2)
+                self._t23DegFull(sibling, sibling.key2)
                 if not tgtNode.isLeaf():
-                    tgtNode.middle = tgt.left
+                    tgtNode.middle = tgtNode.left
                     tgtNode.left = sibling.right
                     sibling.right = None
-            elif parent.left is tgtNode and not parent.right.isFull():
-                sibling = parent.right
+            elif parent.left is tgtNode and not parent.middle.isFull():
+                sibling = parent.middle
                 tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
                 tgtNode.key2, tgtNode.value2 = sibling.key1, sibling.value1
                 parent.key1, parent.value1 = None, None
                 parent.middle = None
                 if not tgtNode.isLeaf():
-                    tgtNode.middle, tgtNode.right = sibling.left, sibling.middle
+                    tgtNode.middle = sibling.left
+                    tgtNode.right = sibling.middle
                 self._t23FixNode(nodeTrack, parent)
-            else: # parent.right is tgtNode and not parent.left.isFull()
+            else: # parent.middle is tgtNode and not parent.left.isFull()
                 sibling = parent.left
                 sibling.key2, sibling.value2 = parent.key1, parent.value1
                 parent.key1, parent.value1 = None, None
@@ -187,7 +233,7 @@ class Tree23Map:
                     sibling = parent.middle
                     tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
                     parent.key1, parent.value1 = sibling.key1, sibling.value1
-                    self._t23DelFromFullNode(sibling, sibling.key1)
+                    self._t23DegFull(sibling, sibling.key1)
                     if not tgtNode.isLeaf():
                         tgtNode.middle = sibling.left
                         sibling.left = sibling.middle
@@ -200,7 +246,7 @@ class Tree23Map:
                     parent.key1, parent.value1 = assist.key1, assist.value1
                     assist.key1, assist.value1 = parent.key2, parent.value2
                     parent.key2, parent.value2 = sibling.key1, sibling.value1
-                    self._t23DelFromFullNode(sibling, sibling.key1)
+                    self._t23DegFull(sibling, sibling.key1)
                     if not tgtNode.isLeaf():
                         tgtNode.middle = assist.left
                         assist.left = assist.middle
@@ -213,7 +259,7 @@ class Tree23Map:
                     assist = parent.middle
                     tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
                     tgtNode.key2, tgtNode.value2 = assist.key1, assist.value1
-                    self._t23DelFromFullNode(parent, parent.key1)
+                    self._t23DegFull(parent, parent.key1)
                     parent.middle, parent.right = sibling, None
                     if not tgtNode.isLeaf():
                         tgtNode.middle = assist.left
@@ -223,7 +269,7 @@ class Tree23Map:
                     sibling = parent.right
                     tgtNode.key1, tgtNode.value1 = parent.key2, parent.value2
                     parent.key2, parent.value2 = sibling.key1, sibling.value1
-                    self._t23DelFromFullNode(sibling, sibling.key1)
+                    self._t23DegFull(sibling, sibling.key1)
                     if not tgtNode.isLeaf():
                         tgtNode.middle = sibling.left
                         sibling.left = sibling.middle
@@ -233,16 +279,56 @@ class Tree23Map:
                     sibling = parent.left
                     tgtNode.key1, tgtNode.value1 = parent.key1, parent.value1
                     parent.key1, parent.value1 = sibling.key2, sibling.value2
-                    self._t23DelFromFullNode(sibling, sibling.key2)
+                    self._t23DegFull(sibling, sibling.key2)
                     if not tgtNode.isLeaf():
                         tgtNode.middle = tgtNode.left
                         tgtNode.left = sibling.right
                         sibling.right = None
                 else:
                     sibling = parent.left
-                    pass
+                    assist = parent.right
+                    sibling.key2, sibling.value2 = parent.key1, parent.value1
+                    self._t23DegFull(parent, parent.key1)
+                    parent.middle = assist
+                    parent.right = None
+                    if not tgtNode.isLeaf():
+                        sibling.right = tgtNode.left
             else: # parent.right is tgtNode
-                pass
+                if parent.middle.isFull():
+                    sibling = parent.middle
+                    tgtNode.key1, tgtNode.value1 = parent.key2, parent.value2
+                    parent.key2, parent.value2 = sibling.key2, sibling.value2
+                    self._t23DegFull(sibling, sibling.key2)
+                    if not tgtNode.isLeaf():
+                        tgtNode.middle = tgtNode.left
+                        tgtNode.left = sibling.right
+                        sibling.right = None
+                elif parent.left.isFull():
+                    sibling = parent.left
+                    assist = parent.middle
+                    tgtNode.key1, tgtNode.value1 = parent.key2, parent.value2
+                    parent.key2, parent.value2 = assist.key1, assist.value1
+                    assist.key1, assist.value1 = parent.key1, parent.value1
+                    parent.key1, parent.value1 = sibling.key2, sibling.value2
+                    self._t23DegFull(sibling, sibling.key2)
+                    if not tgtNode.isLeaf():
+                        tgtNode.middle = tgtNode.left
+                        tgtNode.left = assist.middle
+                        assist.middle = assist.left
+                        assist.left = sibling.right
+                        sibling.right = None
+                else:
+                    sibling = parent.left
+                    assist = parent.middle
+                    sibling.key2, sibling.value2 = parent.key1, parent.value1
+                    parent.key1, parent.value1 = assist.key1, assist.value1
+                    assist.key1, assist.value1 = parent.key2, parent.value2
+                    self._t23DegFull(parent, parent.key2)
+                    parent.right = None
+                    if not tgtNode.isLeaf():
+                        sibling.right = assist.left
+                        assist.left = assist.middle
+                        assist.middle = tgtNode.left
 
     def _t23Search(self, subtree, target):
         """Helper method to search the 2-3 tree for the given target key.
@@ -354,6 +440,91 @@ class Tree23Map:
         """Romove the entry associated with the given key from the Map."""
         self.__delitem__(key)
 
+    def _t23NodeView(self, node):
+        """Helper method to view the entry denoted by <node>."""
+        if node.isLeaf():
+            print "Leaf node:", node
+        else:
+            print "Interior:", node
+            print "     L:", node.left
+            print "     M:", node.middle
+            if node.isFull():
+                print "     R:", node.right
+
+    def _recPreOrderTrav(self, node):
+        """Helper method to traverse the subtree denoted by <node> in
+        pre-order. """
+        if node is not None:
+            self._t23NodeView(node)
+            if not node.isLeaf():
+                self._recPreOrderTrav(node.left)
+                self._recPreOrderTrav(node.middle)
+                if node.isFull():
+                    self._recPreOrderTrav(node.right)
+
+    def preOrderTrav(self):
+        """Pre-order traversal of the 2-3 tree."""
+        self._recPreOrderTrav(self._root)
+
+class _T23Iter:
+    """ Iterator for the 2-3 tree using a software stack """
+
+    FIRST_KEY = 0
+    SECOND_KEY = 1
+
+    LEFT_BRANCH = 0
+    MID_BRANCH = 1
+    RIGHT_BRANCH = 2
+
+    def __init__(self, root):
+        """Create a stack for use in traversing the tree. """
+        self._theStack = Stack()
+        if root is not None:
+            self._theStack.push((root, _T23Iter.FIRST_KEY))
+            self._traverseToMinNode(root, _T23Iter.LEFT_BRANCH)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        """Returns the next item from the BST in key order"""
+        # If the stack is empty, we are done.
+        if self._theStack.isEmpty():
+            raise StopIteration
+        else:       # The top node on the stack contains the next key.
+            (node, which) = self._theStack.pop()
+            if node.isLeaf() and which == _T23Iter.FIRST_KEY:
+                key = node.key1
+                if node.isFull():
+                    self._theStack.push((node, _T23Iter.SECOND_KEY))
+            elif node.isLeaf() and which == _T23Iter.SECOND_KEY:
+                key = node.key2
+            elif not node.isLeaf() and which == _T23Iter.FIRST_KEY:
+                key = node.key1
+                if node.isFull():
+                    self._theStack.push((node, _T23Iter.SECOND_KEY))
+                self._traverseToMinNode(node, _T23Iter.MID_BRANCH)
+            else: # not node.isLeaf() and which == _T23Iter.SECOND_KEY:
+                key = node.key2
+                self._traverseToMinNode(node, _T23Iter.RIGHT_BRANCH)
+            return key
+
+    def _traverseToMinNode(self, node, branch):
+        """ Traverses down <node>'s branch indecated by <branch> to find
+        the node containing the in-order successor"""
+        if not node.isLeaf():
+            if branch == _T23Iter.LEFT_BRANCH:
+                node = node.left
+            elif branch == _T23Iter.MID_BRANCH:
+                node = node.middle
+            else: # branch == _T23Iter.RIGHT_BRANCH
+                node = node.right
+            self._theStack.push((node, _T23Iter.FIRST_KEY))
+            while not node.isLeaf():
+                node = node.left
+                self._theStack.push((node, _T23Iter.FIRST_KEY))
+
+
 class _T23Node(object):
     """storage class for creating the 2-3 tree nodes."""
 
@@ -365,6 +536,12 @@ class _T23Node(object):
         self.left = None
         self.middle = None
         self.right = None
+
+    def __str__(self):
+        if self.isFull():
+            return "[ "+ str(self.key1) + ", " + str(self.key2) +" ]"
+        else:
+            return "[ "+ str(self.key1) + " ]"
 
     def isLeaf(self):
         """Determine if a leaf node. """
@@ -405,14 +582,27 @@ class _T23Node(object):
 
 if __name__ == "__main__":
     from random import randint
-    LLIST = list()
-    for times in range(50):
-        LLIST.append(randint(1, 100))
-    print "===", len(LLIST), "==="
-    TTMAP = Tree23Map()
-    for num in LLIST:
-        TTMAP.add(num, num * 2)
-        TTMAP.add(num, num * 10)
-    print "===", len(TTMAP), "===="
-    for num in LLIST:
-        print num, TTMAP[num]
+    lst = list()
+    for times in range(1000):
+        num = randint(1, 5000)
+        if not num in lst:
+            lst.append(num)
+    print "=== List of keys (totally", len(lst), ") to insert: ==="
+    print lst
+    print "=========="
+    t23Map = Tree23Map()
+    for num in lst:
+        t23Map.add(num, num * 10)
+        print "Added", num
+        t23Map.preOrderTrav()
+        print "==="
+    print "=== Keys and Values: (totally", len(t23Map), ") ===="
+    for keyit in t23Map:
+        print keyit, t23Map[keyit]
+    print "============="
+    for num in lst:
+        t23Map.remove(num)
+        print "Removed", num
+        t23Map.preOrderTrav()
+        print "==="
+    print "============="
