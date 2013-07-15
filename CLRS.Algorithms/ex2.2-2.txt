@@ -1,0 +1,19 @@
+/*
+ * Consider sorting n numbers stored in array A by first finding the smallest
+ * element of A and exchanging it with the element in A[1]. Then find the se-
+ * cond smallest element of A, and exchange it with A[2]. Continue in this
+ * manner for the first n - 1 elements of A. Write pseudocode for this algo-
+ * rithm, which is known as selection sort. What loop invariant does this
+ * algorithm maintain? Why does it need to run for only the first n - 1 ele-
+ * ments, rather than for all n elements? Give the best-case and worst-case
+ * running times of selection sort in theta-notation.
+ *
+ */
+SELECTION-SORT(A)
+    for i = 1 to A.length - 1
+        smallest = i
+        for j = i + 1 to A.length
+            if A[j] < A[smallest]
+                smallest = j
+        if smallest != i
+            exchange A[i] with A[smallest]
