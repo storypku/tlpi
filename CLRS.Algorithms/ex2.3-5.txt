@@ -9,11 +9,11 @@
  */
 
 /* 
- * We give both iterative and recursive versions, each of which returns either
- * an index i such that A[i] == v, or NIL if no entry of A[low...high] contains
- * the value v. The initial call to either version should have the parameters
- * A, v, 1, n.
+ * Both the iterative and recursive versions return either an index i such
+ * that A[i] == v, or NIL if no entry of A[low...high] contains the value v.
+ * The initial call to either version should have the parameters A, v, 1, n.
  */
+
 ITERATIVE-BINARY-SEARCH(A, v, low, high)
     while low <= high
         mid = floor((low + high)/2)

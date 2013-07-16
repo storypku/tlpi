@@ -1,0 +1,39 @@
+/*
+ * Describe a THETA(nlogn)-time algorithm that, given a set S of n integers
+ * and another integer x, determines whether or not there exist two elements
+ * in S whose sum is exactly x.
+ */
+
+/*
+ * Sort the set S using merge sort. Then for each y in S, separately use bi-
+ * nary search to check if integer x − y exists in S.
+ * Sorting takes time THETA(nlogn). Binary search takes time THETA(logn) and
+ * is executed n times. The total time is thus THETA(nlogn).
+ */
+FUNCTION(S, x)
+    MERGE-SORT(S)
+    for each y in S:
+        if BINARY-SEARCH(S, x - y) != NIL and x != 2 * y
+            return true
+    return false
+
+/*
+ * The problem can also be solved in linear time by scanning the list S
+ * (assuming it has been merge-sorted already) at the same time forward
+ * and backward directions:
+ * Input: list S to be sorted in ascending order, x
+ * Output: true if there exist two elements in S whose sum is exactly x,
+ * false otherwise
+ */
+FUNCTION(S, x)
+    MERGE-SORT(S)
+    i = 1
+    j = n
+    while i < j:
+        if S[i] + S[j] == x
+            return true
+        elif S[i] + S[j] < x
+            i = i + 1
+        else
+            j = j - 1
+    return false
