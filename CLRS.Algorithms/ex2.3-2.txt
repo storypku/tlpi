@@ -15,7 +15,7 @@ MERGE(A, p, q, r)   //Merge A[p...q] and A[q+1...r]
     j = 1
     k = p
     while i < n1 + 1 and j < n2 + 1
-        if L[i] < R[j]
+        if L[i] <= R[j]
             A[k] = L[i]
             i = i + 1
         else
