@@ -6,7 +6,7 @@
  * rithm, which is known as selection sort. What loop invariant does this
  * algorithm maintain? Why does it need to run for only the first n - 1 ele-
  * ments, rather than for all n elements? Give the best-case and worst-case
- * running times of selection sort in theta-notation.
+ * running times of selection sort in THETA-notation.
  *
  */
 SELECTION-SORT(A)

@@ -1,0 +1,38 @@
+/*
+ * Referring back to the searching problem (see Exercise 2.1-3), observe that
+ * if the sequence A is sorted, we can check the midpoint of the sequence ag-
+ * ainst and eliminate half of the sequence from further consideration. The
+ * binary search algorithm repeats this procedure, halving the size of the re-
+ * maining portion of the sequence each time. Write pseudocode, either itera-
+ * tive or recursive, for binary search. Argue that the worst-case running
+ * time of binary search is THETA(lgn).
+ */
+
+/* 
+ * We give both iterative and recursive versions, each of which returns either
+ * an index i such that A[i] == v, or NIL if no entry of A[low...high] contains
+ * the value v. The initial call to either version should have the parameters
+ * A, v, 1, n.
+ */
+ITERATIVE-BINARY-SEARCH(A, v, low, high)
+    while low <= high
+        mid = floor((low + high)/2)
+        if v == A[mid]
+            return mid
+        elif A[mid] < v
+            low = mid + 1
+        else
+            high = mid - 1
+    return NIL
+
+RECURSIVE-BINARY-SEARCH(A, v, low, high)
+    if low > high
+        return NIL
+    mid = floor((low + high)/2)
+    if v == A[mid]
+        return mid
+    elif v > A[mid]
+        return RECURSIVE-BINARY-SEARCH(A, v, mid + 1, high)
+    else
+        return RECURSIVE-BINARY-SEARCH(A, v, low, mid - 1)
+
