@@ -1,0 +1,23 @@
+/*
+ * b) Write pseudocode to implement the naive polynomial-evaluation algorithm
+ *  that computes each term of the polynomial from scratch. What is the runn-
+ *  ing time of this algorithm? How does it compare to Horner's rule?
+ *  f(x) = a0 + a1*x + a2*x**2 + ... + an*x**n
+ */
+NAIVE-EVALUATE-POLYNOMIAL(a[0...n], x)
+    sum = a[0]
+    for i = 1 to n
+        y = a[i]
+        for j = 1 to i
+            y = y * x
+        sum = sum + y
+    return sum
+
+/*
+ * f(x) = a[0] + x(a[1] + x(a[2] + ... + x(a[n-1] + xa[n])))
+ */
+HORNER-EVALUATE-POLYNOMIAL(a[0...n], x)
+	y = 0
+	for i = n downto 0
+		y = a[i] + x * y
+
