@@ -55,10 +55,3 @@ class _BagIterator:
         else:
             raise StopIteration
 
-
-a=Bag()
-a.add(5)
-a.add(13)
-a.add(8)
-for i in a:
-    print i,
