@@ -1,6 +1,8 @@
 class CreditCard:
     """A consumer credit card."""
 
+    __slots__ = '_customer', '_bank', '_account', '_limit', '_balance'
+
     def __init__(self, customer, bank, acnt, limit):
         """Create a new credit card instance.
 
@@ -54,6 +56,9 @@ class CreditCard:
 class PredatoryCreditCard(CreditCard):
     """An extension to CreditCard that compounds interest and fees."""
 
+    __slots__ = '_apr'
+    OVERLIMIT_FEE = 5
+
     def __init__(self, customer, bank, acnt, limit, apr):
         """Create a new predatory credit card instance.
 
@@ -80,7 +85,7 @@ class PredatoryCreditCard(CreditCard):
         """
         success = super().charge(price)  # call inherited method
         if not success:
-            self._balance += 5  # assess penalty
+            self._balance += PredatoryCreditCard.OVERLIMIT_FEE # penalty
         return success
 
     def process_month(self):
