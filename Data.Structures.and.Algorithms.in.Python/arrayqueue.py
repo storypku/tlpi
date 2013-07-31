@@ -101,20 +101,53 @@ class Deque:
 
     def _resize(self, cap):
         """Resize to a new list of capacity >= len(self)."""
-        pass
+        old = self._data
+        self._data = [None] * cap
+        walk = self._front
+        for k in range(self._size):
+            self._data[k] = old[walk]
+            walk = (walk + 1) % len(old)
+        self._front = 0
 
-    def add_first(elem):
+    def add_first(self, elem):
         """Add element elem to the front of the deque."""
-        pass
+        if self._size == len(self._data):
+            self._resize(2 * self._size)
+        self._front = (self._front - 1) % len(self._data) # cyclic shift
+        self._data[self._front] = elem
+        self._size += 1
 
-    def add_last(elem):
+    def add_last(self, elem):
         """Add element elem to the back of the deque."""
-        pass
+        if self._size == len(self._data):
+            self._resize(2 * self._size)
+        avail = (self._front + self._size) % len(self._data)
+        self._data[avail] = elem
+        self._size += 1
 
-    def delete_first():
-        """Remove and return the first element from the deque."""
-        pass
+    def delete_first(self):
+        """Remove and return the first element from the deque.
 
-    def delete_last():
+        raise Empty exception if the deque is empty.
+        """
+        if self.is_empty():
+            raise Empty("Queue is empty.")
+        answer = self._data[self._front]
+        self._data[self._front] = None
+        self._front = (self._front + 1) % len(self._data)
+        self._size -= 1
+        if self._size < len(self._data) // 4:
+            self._resize(len(self._data) // 2)
+        return answer
+
+    def delete_last(self):
         """Remove and return the last element from the deque."""
-        pass
+        if self.is_empty():
+            raise Empty("Queue is empty.")
+        last = (self._front + self._size - 1) % len(self._data)
+        answer = self._data[last]
+        self._data[last] = None
+        self._size -= 1
+        if self._size < len(self._data) // 4:
+            self._resize(len(self._data) // 2)
+        return answer
