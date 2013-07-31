@@ -1,6 +1,4 @@
-class Empty(Exception):
-    """Error attempting to access an element from an empty container."""
-    pass
+from custom_exception import Empty
 
 class ArrayQueue:
     """FIFO queue implementation using a Python list as underlying storage."""
