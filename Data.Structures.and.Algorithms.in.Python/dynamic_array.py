@@ -71,7 +71,7 @@ class DynamicArray:
         self._array[self._length -1] = None     # help garbage collection
         self._length -= 1
 
-        if self._length < self._capacity // 2 : # shrink the dynamic array
+        if self._length < self._capacity // 4 : # shrink the dynamic array
             self._resize(self._capacity // 2)
 
         return value
