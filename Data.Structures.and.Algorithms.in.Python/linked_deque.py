@@ -143,13 +143,13 @@ class PositionalList(_DoublyLinkedBase):
         return self._make_position(self._trailer._prev)
 
     def before(self, pos):
-        """Return the Postion just before Postion pos (or None if pos is
+        """Return the Position just before Position pos (or None if pos is
         first)."""
         node = self._validate(pos)
         return self._make_position(node._prev)
 
     def after(self, pos):
-        """Return the Postion just after Postion pos (or None if pos is
+        """Return the Position just after Position pos (or None if pos is
         last)."""
         node = self._validate(pos)
         return self._make_position(node._next)
@@ -161,26 +161,26 @@ class PositionalList(_DoublyLinkedBase):
             yield cursor.element()
             cursor = self.after(cursor)
     #--------------------------  mutators  -----------------------------------
-    # override inherited version to return Postion, rather than _Node
+    # override inherited version to return Position, rather than _Node
     def _insert_between(self, elem, predecessor, successor):
         """Add element elem between existing nodes and return the new
-        Postion."""
+        Position."""
         node = super()._insert_between(elem, predecessor, successor)
         return self._make_position(node)
 
     def add_first(self, elem):
         """Add element elem to the front of the list and return the new
-        Postion."""
+        Position."""
         return self._insert_between(elem, self._header, self._header._next)
 
     def add_last(self, elem):
         """Add element elem to the back of the list and return the new
-        Postion."""
+        Position."""
         return self._insert_between(elem, self._trailer._prev, self._trailer)
 
     def add_before(self, pos, elem):
-        """Add element elem into list before Postion pos and return new
-        Postion."""
+        """Add element elem into list before Position pos and return new
+        Position."""
         original = self._validate(pos)
         return self._insert_between(elem, original._prev, original)
 
