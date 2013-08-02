@@ -65,7 +65,32 @@ class FavoritesList:
         # an exception.
         k = min(k, len(self))
         walk = self._data.first()
-        for j in range(k):
+        for _ in range(k):
             item = walk.element()
             yield item._value
             walk = self._data.after(walk)
+
+class FavoritesListMTF(FavoritesList):
+    """List of elements ordered with move-to-front heuristic."""
+
+    # override _move_up to provide move-to-front semantics
+    def _move_up(self, pos):
+        """Move accessed item at Position pos to the front of list."""
+        if pos != self._data.first():
+            self._data.add_first(self._data.delete(pos))
+
+    def top(self, k):
+        """Generate sequence of top k elements in terms of access count."""
+        k = min(k, len(self))
+        temp = PositionalList()
+        for item in self._data:
+            temp.add_last(item)
+        for _ in range(k):
+            highPos = temp.first()
+            walk = temp.after(highPos)
+            while walk is not None:
+                if walk.element()._count > highPos.element()._count:
+                    highPos = walk
+                walk = temp.after(walk)
+            yield highPos.element()._value
+            temp.delete(highPos)
