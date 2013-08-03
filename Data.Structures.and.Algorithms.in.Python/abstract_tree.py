@@ -1,3 +1,5 @@
+from linked_queue import LinkedQueue
+
 class Tree:
     """Abstract base class representing a tree structure."""
 
@@ -41,6 +43,100 @@ class Tree:
         raise NotImplementedError("must be implemented by subclass.")
 
     # --------- concrete methods implemented in this class -------------------
+    def preorder(self):
+        """Generate a preorder iteration of positions in the tree."""
+        if not self.is_empty():
+            for pos in self._subtree_preorder(self.root()):
+                yield pos
+
+    def _subtree_preorder(self, pos):
+        """Generate a preorder iteration of positions in subtree rooted at
+        pos."""
+        yield pos
+        for child in self.children(pos):
+            for other in self._subtree_preorder(child):
+                yield other
+
+    def preorder_indent(self):
+        """Print preorder representation of tree."""
+        if not self.is_empty():
+            d = self.depth(self.root())
+            self._subtree_preorder_indent(self.root(), d)
+
+    def _subtree_preorder_indent(self, pos, d):
+        """Print preorder representation of subtree rooted at pos at depth
+        d."""
+        print (2*d*" " + str(pos.element()))
+        for child in self.children(pos):
+            self._subtree_preorder_indent(child, d + 1)
+
+    def preorder_label(self):
+        if not self.is_empty():
+            d = self.depth(self.root())
+            path = list()
+            self._subtree_preorder_label(self.root(), d, path)
+
+    def _subtree_preorder_label(self, pos, d, path):
+        """Print labeled representation of subtree rooted at pos at depth
+        d."""
+        label = ".".join(str(j+1) for j in path)
+        print (2*d*" " + label, str(pos.element()))
+        path.append(0)
+        for child in self.children(pos):
+            self._subtree_preorder_label(child, d+1, path)
+            path[-1] += 1
+        path.pop()
+
+    def parenthesize(self):
+        if not self.is_empty():
+            self._subtree_parenthesize(self.root())
+            print()
+
+    def _subtree_parenthesize(self, pos):
+        """print parenthesized representation of subtree rooted at pos."""
+        print(str(pos.element()), end="")
+        if not self.is_leaf(pos):
+            first_time = True
+            for child in self.children(pos):
+                sep = " (" if first_time else ", "
+                print(sep, end="")
+                first_time = False
+                self._subtree_parenthesize(child)
+            print (")", end="")
+
+    def postorder(self):
+        """Generate a postorder iteration of positions in the tree."""
+        if not self.is_empty():
+            for pos in self._subtree_postorder(self.root()):
+                yield pos
+
+    def _subtree_postorder(self, pos):
+        """Generate a postorder iteration of positions in subtree rooted at
+        pos."""
+        for child in self.children(pos):
+            for other in self._subtree_postorder(child):
+                yield other
+        yield pos
+
+    def breadthfirst(self):
+        if not self.is_empty():
+            fringe = LinkedQueue()
+            fringe.enqueue(self.root())
+            while not fringe.is_empty():
+                pos = fringe.dequeue()
+                yield pos
+                for child in self.children(pos):
+                    fringe.enqueue(child)
+
+    def positions(self):
+        """Generate an iteration of the tree's positions."""
+        return self.preorder()
+
+    def __iter__(self):
+        """Generate an iteration of the tree's elements."""
+        for pos in self.positions():
+            yield pos.element()
+
     def is_root(self, pos):
         """Return True if Position pos represents the root of the tree."""
         return self.root() == pos
@@ -116,4 +212,25 @@ class BinaryTree(Tree):
             yield self.left(pos)
         if self.right(pos) is not None:
             yield self.right(pos)
+
+    def inorder(self):
+        """Generate an inorder iteration of positions in the tree."""
+        if not self.is_empty():
+            for pos in self._subtree_inorder(self.root()):
+                yield pos
+
+    def _subtree_inorder(self, pos):
+        """Generate an inorder iteration of positions in subtree rooted at
+        pos."""
+        if self.left(pos) is not None:
+            for other in self._subtree_inorder(self.left(pos)):
+                yield other
+        yield pos
+        if self.right(pos) is not None:
+            for other in self._subtree_inorder(self.right(pos)):
+                yield other
+
+    def positions(self):
+        """Generate an iteration of the tree's positions."""
+        return self.inorder() # make inorder the default for binary tree.
 
