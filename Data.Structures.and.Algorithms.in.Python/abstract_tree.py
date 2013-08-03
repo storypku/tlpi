@@ -88,6 +88,7 @@ class Tree:
         path.pop()
 
     def parenthesize(self):
+        """print parenthesized representation of tree."""
         if not self.is_empty():
             self._subtree_parenthesize(self.root())
             print()
