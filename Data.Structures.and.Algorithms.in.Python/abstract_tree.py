@@ -60,8 +60,7 @@ class Tree:
     def preorder_indent(self):
         """Print preorder representation of tree."""
         if not self.is_empty():
-            d = self.depth(self.root())
-            self._subtree_preorder_indent(self.root(), d)
+            self._subtree_preorder_indent(self.root(), 0)
 
     def _subtree_preorder_indent(self, pos, d):
         """Print preorder representation of subtree rooted at pos at depth
@@ -72,9 +71,7 @@ class Tree:
 
     def preorder_label(self):
         if not self.is_empty():
-            d = self.depth(self.root())
-            path = list()
-            self._subtree_preorder_label(self.root(), d, path)
+            self._subtree_preorder_label(self.root(), 0, [])
 
     def _subtree_preorder_label(self, pos, d, path):
         """Print labeled representation of subtree rooted at pos at depth
