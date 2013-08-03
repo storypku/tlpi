@@ -75,5 +75,45 @@ class Tree:
         """
         if pos is None:
             pos = self.root()
+            if pos is None: # designate empty tree's height as -1
+                return -1
         return self._height2(pos)   # O(n)
+
+class BinaryTree(Tree):
+    """Abstract base class representing a binary tree structure."""
+
+    # ------------  additional abstract methods  ----------------------
+    def left(self, pos):
+        """Return a Position representing pos's left child.
+
+        Return None if pos does not have a left child.
+        """
+        raise NotImplementedError("must be implemented by subclass.")
+
+    def right(self, pos):
+        """Return a Position representing pos's right child.
+
+        Return None if pos does not have a right child.
+        """
+        raise NotImplementedError("must be implemented by subclass.")
+
+    # ------------  concrete methods implemented in this class  ---------
+    def sibling(self, pos):
+        """Return a Position representing pos's sibling (or None if no
+        sibling)"""
+        parent = self.parent(pos)
+        if parent is None:  # pos must be the root
+            return None
+        else:
+            if pos == self.left(parent):
+                return self.right(parent)
+            else:
+                return self.left(parent)
+
+    def children(self, pos):
+        """Generate an iteration of Positions representing pos's children."""
+        if self.left(pos) is not None:
+            yield self.left(pos)
+        if self.right(pos) is not None:
+            yield self.right(pos)
 
