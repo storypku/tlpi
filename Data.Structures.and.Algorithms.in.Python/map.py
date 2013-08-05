@@ -90,19 +90,16 @@ class HashMapBase(MapBase):
 
     def __getitem__(self, k):
         j = self._hash_function(k)
-        print("====", j)
         return self._bucket_getitem(j, k) # may raise KeyError
 
     def __setitem__(self, k, v):
         j = self._hash_function(k)
-        print("====", j)
         self._bucket_setitem(j, k, v)   # subroutine maintains self._n
         if self._n > len(self._table) // 2: # keep load factor <= 0.5
             self._resize(2 * len(self._table) + 1)
 
     def __delitem__(self, k):
         j = self._hash_function(k)
-        print("====", j)
         self._bucket_delitem(j, k)  # may raise KeyError
         self._n -= 1
 
