@@ -186,7 +186,7 @@ class HeapPriorityQueue(PriorityQueueBase):
 
 class AdaptableHeapPriorityQueue(HeapPriorityQueue):
     """A locator-based priority queue implemented with a binary heap. Effort
-    to make better support for Locator is under the way.
+    to make better support for Locator is under way.
     """
 
     # ----  nested Locator class  -----
