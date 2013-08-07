@@ -1,0 +1,72 @@
+Algorithm SkipSearch(S, k):
+
+	Input: A skip list S and a search key k
+
+	Output: Position p in the bottom list S_0 with the largest key such that
+			key(p) <= k
+
+	Pseudo Code:
+
+	def SkipSearch(S, k):
+		p = start	# begin at start position
+		while below(p) is not None:
+    		p = below(p)			# drop down
+			while k > key(next(p))
+				p = next(p)			# scan forward
+		return p
+
+Algorithm SkipInsert(S, k, v):
+
+	Input: A skip list S, and a key-value pair k, v (Assuming k was not in the
+			skip list originally).
+
+	Output: Topmost position of the item inserted in the skip list
+
+	Pseudo code:
+	
+	def SkipInsert(S, k, v):
+
+		# Insertion into a skip list. Method coinFlip() returns "heads" or
+		# "tails", each with probability 1/2. Instance variables n, h, and s
+		# hold the number of entries, the height, and the start node of the
+		# skip list.
+
+		p = SkipSearch(S, k)
+		q = None 				# q will represent top node in new item's tower
+
+		i = -1
+		repeat
+			i = i + 1			# add a new level to the skip list
+
+			if i >= h:
+				h = h + 1
+				t = next(s)
+
+				# grow leftmost tower
+				s = insertAfterAbove(None, s, (-unlimited, None))
+
+				# grow rightmost tower
+				insertAfterAbove(s, t, (+unlimited, None))
+
+			# increase height of new item's tower
+			q = insertAfterAbove(p, q, (k, v))
+
+			while above(p) is None:
+				p = prev(p)			# scan backward
+			p = above(p)			# jump up to higher level
+
+		until coinFlip() == tails
+		n = n + 1
+		return q
+
+Fig. Insertion of an entry with key 42 into the skip list with height of 5
+
+		start
+		  |
+	S_5 -inf ------------------------------------------------ +inf
+	S_4 -inf ------17---------------------------------------- +inf
+	S_3 -inf ------17------25--------------(42)----------55-- +inf
+	S_2 -inf ------17------25--31----------(42)----------55-- +inf
+	S_1 -inf --12--17------25--31--38------(42)--44------55-- +inf
+	S_0 -inf --12--17--20--25--31--38--39--(42)--44--50--55-- +inf
+
