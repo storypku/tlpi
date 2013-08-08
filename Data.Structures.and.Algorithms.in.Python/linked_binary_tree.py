@@ -283,17 +283,17 @@ class ExpressionTree(LinkedBinaryTree):
             else: return left_val * right_val
 
 def build_expression_tree(tokens):
-        """Return an ExpressionTree based upon by a tokenized expression."""
-        S = []
-        for tok in tokens:
-            if tok in "+-*x/":
-                S.append(tok)
-            elif tok not in "( )":
-                S.append(ExpressionTree(t))
-            elif t == ")":
-                right = S.pop()
-                op = S.pop()
-                left = S.pop()
-                S.append(ExpressionTree(op, left, right))
+    """Return an ExpressionTree based upon by a tokenized expression."""
+    S = []
+    for tok in tokens:
+        if tok in "+-*x/":
+            S.append(tok)
+        elif tok not in "( )":
+            S.append(ExpressionTree(tok))
+        elif tok == ")":
+            right = S.pop()
+            op = S.pop()
+            left = S.pop()
+            S.append(ExpressionTree(op, left, right))
             # ignore a left parenthesis and a blank space.
-        return S.pop()
+    return S.pop()
