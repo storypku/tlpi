@@ -189,7 +189,6 @@ class TreeMap(LinkedBinaryTree, MapBase):
         else:
             pos = self._subtree_search(self.root(), k)
             self._rebalance_access(pos) # hook for balanced tree subclasses
-            
             if pos.key() != k:
                 raise KeyError("Key Error: " + repr(k))
             else:
@@ -204,7 +203,6 @@ class TreeMap(LinkedBinaryTree, MapBase):
             if pos.key() == k:
                 pos.element()._value = v
                 self._rebalance_access(pos) # hook as described above
-                
                 return
             else:
                 item = self._Item(k, v)
@@ -213,8 +211,6 @@ class TreeMap(LinkedBinaryTree, MapBase):
                 else:
                     leaf = self._add_left(pos, item)
         self._rebalance_insert(leaf) # hook for balanced tree subclasses
-        
-
 
     def __iter__(self): # O(n)
         """Generate an iteration of all keys in the map in order."""
@@ -241,7 +237,6 @@ class TreeMap(LinkedBinaryTree, MapBase):
         parent = self.parent(pos)
         self._delete(pos) # inherited from LinkedBinaryTree
         self._rebalance_delete(parent) # if root deleted, parent is None
-        
 
     def __delitem__(self, k):   # O(h)
         """Remove item associated with key k (or raise KeyError if not
@@ -252,7 +247,6 @@ class TreeMap(LinkedBinaryTree, MapBase):
                 self.delete(pos)    # rely on positional version
                 return
             self._rebalance_access(pos)
-            
         raise KeyError("Key Error: " + repr(k))
 
     def _rebalance_access(self, pos):
@@ -304,4 +298,76 @@ class TreeMap(LinkedBinaryTree, MapBase):
             self._rotate(x)
             return x                        # x is new subtree's root
 
+class AVLTreeMap(TreeMap):
+    """Sorted map implementation using an AVL tree."""
+
+    # ----  nested _Node class  ----
+    class _Node(TreeMap._Node):
+        """Node class for AVL maintains height value for balancing."""
+        __slots__ = "_height" # additional data member to store height
+
+        def __init__(self, element, parent=None, left=None, right=None):
+            super().__init__(element, parent, left, right)
+            self._height = 0    # will be recomputed during balancing
+
+        def left_height(self):
+            """Return the height of node's left subtree."""
+            return self._left._height if self._left is not None else 0
+
+        def right_height(self):
+            """Return the height of node's right subtree."""
+            return self._right._height if self._right is not None else 0
+
+    # ----  positional-based utility methods  ----
+    def _recompute_height(self, pos):
+        node = pos._node
+        node._height = 1 + max(node.left_height(), node.right_height())
+
+    def _isbalanced(self, pos):
+        return abs(pos._node.left_height() - pos._node.right_height()) <= 1
+
+    def _tall_child(self, pos, favorleft=False): # param controls tiebreaker
+        tiebreaker = 1 if favorleft else 0
+        if pos._node.left_height() + tiebreaker > pos._node.right_height():
+            return self.left(pos)
+        else:
+            return self.right(pos)
+
+    def _tall_grandchild(self, pos):
+        child = self._tall_child(pos)
+        favorleft = (child == self.left(pos))
+        return self._tall_child(child, favorleft)
+
+    def _rebalance(self, pos):
+        while pos is not None:
+            old_height = pos._node._height # trivially 0 if new node
+            if not self._isbalanced(pos):  # imbalance detected
+                # perform trinode restructuring, setting pos to resulting
+                # root, and recompute new local height after the restructur-
+                # ing
+                pos = self._restructure(self._tall_grandchild(pos))
+                self._recompute_height(self.left(pos))
+                self._recompute_height(self.right(pos))
+            self._recompute_height(pos)         # adjust for recent changes
+            if pos._node._height == old_height: # has height changed?
+                pos = None
+            else:
+                pos = self.parent(pos)          # repeat with parent
+
+    def _rebalance_insert(self, pos):
+        self._rebalance(pos)
+
+    def _rebalance_delete(self, pos):
+        self._rebalance(pos)
+
+
+if __name__ == "__main__":
+    a = AVLTreeMap()
+    for i in range(50000):
+        a[i] = i
+
+    for i in range(50000):
+        print(a[i])
+    for i in range(50000):
+        del a[i]
 
