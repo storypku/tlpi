@@ -360,14 +360,45 @@ class AVLTreeMap(TreeMap):
     def _rebalance_delete(self, pos):
         self._rebalance(pos)
 
+class SplayTreeMap(TreeMap):
+    """Sorted map implementation using a splay tree.
 
-if __name__ == "__main__":
-    a = AVLTreeMap()
-    for i in range(50000):
-        a[i] = i
+    When to splay?
+    1) When searching for key k, if k is found at position pos, we splay pos;
+       else we splay the position at which the search terminates unsuccess-
+       fully.
 
-    for i in range(50000):
-        print(a[i])
-    for i in range(50000):
-        del a[i]
+    2) When inserting key k, we splay the existing node containing the key k
+       if key k already exists in the splay tree; otherwise, splay the newly
+       created node.
+
+    3) When deleting a key k, we splay the position pos that is the parent of
+       the removed node. If the key doesn't exists, we splay the position at
+       which the search terminates unsuccessfully and then raise a KeyError.
+    """
+    def _splay(self, pos):
+        if pos != self.root():
+            parent = self.parent(pos)
+            grand = self.parent(parent)
+            if grand is None:
+                # zig case
+                self._rotate(pos)
+            elif (parent == self.left(grand)) == (pos == self.left(parent)):
+                # zig-zig case
+                self._rotate(parent)
+                self._rotate(pos)
+            else:
+                # zig-zag case
+                self._rotate(pos)
+                self._rotate(pos)
+
+    # ----  override balancing hooks  ----
+    def _rebalance_insert(self, pos):
+        self._splay(pos)
+
+    def _rebalance_delete(self, pos):
+        self._splay(pos)
+
+    def _rebalance_access(self, pos):
+        self._splay(pos)
 
