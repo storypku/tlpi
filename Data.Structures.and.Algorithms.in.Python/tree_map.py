@@ -428,7 +428,7 @@ class RedBlackTreeMap(TreeMap):
                 return child
         return None
 
-    # ---- support for insertions  ----
+    # ----  support for insertions  ----
     def _rebalance_insert(self, pos):
         self._resolve_red(pos)      # new node is always red
 
@@ -453,3 +453,52 @@ class RedBlackTreeMap(TreeMap):
                     self._set_black(parent)
                     self._set_black(uncle)
                     self._resolve_red(grand)    # recur at red grandparent
+
+    # ----  support for deletions  ----
+    def _rebalance_delete(self, pos):
+        if len(self) == 1:
+            self._set_black(self.root())
+        elif pos is not None:
+            num = self.num_children(pos)
+            # Please illustrate all possible cases to see the logic described
+            # here.
+            if num == 1:
+                child = next(self.children(pos))
+                if not self._is_red_leaf(child):
+                    self._fix_deficit(pos, child)
+            elif num == 2:
+                if self._is_red_leaf(self.left(pos)):
+                    self._set_black(self.left(pos))
+                else:
+                    self._set_black(self.right(pos))
+
+    def _fix_deficit(self, z, y):
+        """Resolve black deficit at z, where y is the root of z's heavier
+        subtree."""
+        if not self._is_red(y): # y is black, will apply case 1 and case 2
+            x = self._get_red_child(y)
+            if x is not None:
+                # Case 1: y is black and has a red child x; do "transfer"
+                old_color = self._is_red(z)
+                middle = self._restructure(x)
+                self._set_color(middle, old_color) # middle gets z's old color
+                self._set_black(self.left(middle)) # children becomes black
+                self._set_black(self.right(middle))
+            else:
+                # Case 2: y is black, but no red children: both children of y
+                # are black (or None). recolor as "fusion"
+                self._set_red(y)
+                if self._is_red(z):
+                    self._set_black(z)      # this resolves the problem
+                else:
+                    if not self.is_root(z): # recur upward if z is not root
+                        self._fix_deficit(self.parent(z), self.sibling(z))
+        else:   # Case 3: y is red; rotate mis-aligned 3-node and repeat
+            self._rotate(y)
+            self._set_black(y)
+            self._set_red(z)
+            if z == self.right(y):
+                self._fix_deficit(z, self.left(z))
+            else:
+                self._fix_deficit(z, self.right(z))
+
