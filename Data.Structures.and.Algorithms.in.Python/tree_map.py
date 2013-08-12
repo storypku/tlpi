@@ -402,3 +402,54 @@ class SplayTreeMap(TreeMap):
     def _rebalance_access(self, pos):
         self._splay(pos)
 
+class RedBlackTreeMap(TreeMap):
+    """Sorted map implementation using a red-black tree."""
+
+    class _Node(TreeMap._Node):
+        """Node class for red-black tree maintains bit that denotes color."""
+        __slots__ = "_red"
+
+        def __init__(self, element, parent=None, left=None, right=None):
+            super().__init__(element, parent, left, right)
+            self._red = True    # new node red by default
+
+    # ----  positional-based utilities  ----
+    def _set_red(self, pos):    pos._node._red = True
+    def _set_black(self, pos):  pos._node._red = False
+    def _set_color(self, pos, make_red):    pos._node._red = make_red
+    def _is_red(self, pos):     return pos is not None and pos._node._red
+    def _is_red_leaf(self, pos):
+        return self._is_red(pos) and self.is_leaf(pos)
+
+    def _get_red_child(self, pos):
+        """Return a red child of pos (or None if no such child)."""
+        for child in (self.left(pos), self.right(pos)):
+            if self._is_red(child):
+                return child
+        return None
+
+    # ---- support for insertions  ----
+    def _rebalance_insert(self, pos):
+        self._resolve_red(pos)      # new node is always red
+
+    def _resolve_red(self, pos):
+        if self.is_root(pos):
+            self._set_black(pos)    # make root black
+        else:
+            parent = self.parent(pos)
+            if self._is_red(parent):        # double parent problem
+                uncle = self.sibling(parent)
+                if not self._is_red(uncle): # case 1: mis-shapen 4-node
+                    middle = self._restructure(pos) # do trinode restructuring
+                    self._set_black(middle)
+                    self._set_red(self.left(middle))
+                    self._set_red(self.right(middle))
+                else:                       # case 2: overfull 5-node
+                    # for now, grandparent becomes red even if it is root, we
+                    # delay setting the root black in the next _resolve_red
+                    # call
+                    grand = self.parent(parent)
+                    self._set_red(grand)    # do a recoloring
+                    self._set_black(parent)
+                    self._set_black(uncle)
+                    self._resolve_red(grand)    # recur at red grandparent
