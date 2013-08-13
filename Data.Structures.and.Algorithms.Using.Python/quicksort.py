@@ -1,5 +1,6 @@
 def quickSort(theSeq):
-    """sorts an array or list using the recursive quick sort algorithm."""
+    """sorts an array or list using the recursive quick sort algorithm.
+    Complexity: O(nlogn) expected, O(n^2) in the worst case."""
     n = len(theSeq)
     recQuickSort(theSeq, 0, n-1)
 
@@ -34,14 +35,11 @@ def partionSeq(theSeq, first, last):
 
         # Swap the two keys if we have not completed this partition
         if left < right:
-            tmp = theSeq[left]
-            theSeq[left] = theSeq[right]
-            theSeq[right] = tmp
+            theSeq[left], theSeq[right] = theSeq[right], theSeq[left]
 
     # Put the pivot in the proper position
     if right != first:
-        theSeq[first] = theSeq[right]
-        theSeq[right] = pivot
+        theSeq[first], theSeq[right] = theSeq[right], pivot
 
     # Return the index postion of the pivot value
     return right
