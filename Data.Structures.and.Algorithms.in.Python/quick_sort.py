@@ -23,3 +23,32 @@ def _inplace_quick_sort(S, first, last):
 
     _inplace_quick_sort(S, first, left-1)
     _inplace_quick_sort(S, left+1, last)
+
+from linked_queue import LinkedQueue
+
+def quick_sort_queue(S):
+    """Sort the elements of queue S using the quick-sort algorithm."""
+    n = len(S)
+    if n < 2:
+        return
+    Lt  = LinkedQueue()
+    Eq  = LinkedQueue()
+    Gt  = LinkedQueue()
+    pivot = S.dequeue()
+    Eq.enqueue(pivot)
+    while not S.is_empty():
+        val = S.dequeue()
+        if val < pivot:
+            Lt.enqueue(val)
+        elif val > pivot:
+            Gt.enqueue(val)
+        else:
+            Eq.enqueue(val)
+    quick_sort_queue(Lt)
+    quick_sort_queue(Gt)
+    while not Lt.is_empty():
+        S.enqueue(Lt.dequeue())
+    while not Eq.is_empty():
+        S.enqueue(Eq.dequeue())
+    while not Gt.is_empty():
+        S.enqueue(Gt.dequeue())
