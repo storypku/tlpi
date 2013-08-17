@@ -80,3 +80,20 @@ def merge_sort_nonrecur(S):
         src, dest = dest, src
     if S is not src:
         S[0:n] = src[0:n]
+
+class _Item:
+    def __init__(self, k, v):
+        self._key = k
+        self._value = v
+    def __lt__(self, other):
+        return self._key < other._key
+
+def merge_sort_decorated(S, key = None):
+    if key is not None:
+        for j in range(len(S)):
+            S[j] = _Item(key(S[j]), S[j])
+    merge_sort_nonrecur(S)
+    if key is not None:
+        for j in range(len(S)):
+            S[j] = S[j]._value
+
