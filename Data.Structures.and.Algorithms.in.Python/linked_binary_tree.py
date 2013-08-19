@@ -172,7 +172,7 @@ class LinkedBinaryTree(BinaryTree):
             t1._root = None # set t1 instance to empty
             t1._size = 0
         if not t2.is_empty():
-            t2._root.parent = node
+            t2._root._parent = node
             node._right = t2._root
             t2._root = None
             t2._size = 0
