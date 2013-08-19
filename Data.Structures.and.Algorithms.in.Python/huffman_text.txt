@@ -1,0 +1,6 @@
+           haskell is fun and thats what its all about this book is aimed
+at people who have experience programming in imperative languages such as
+cpp java and python and now want to try out haskell but enven if you dont
+have any siginificant programming experience i ll bet a smart person like
+you will be able to follow along and learn haskell a fast runner need not
+be afraid of the dark and a quick brown fox jumped over a lazy dog
