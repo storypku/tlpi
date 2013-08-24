@@ -1,3 +1,5 @@
+import random
+
 class Graph:
     """Representation of a simple graph using a adjacency map."""
 
@@ -186,3 +188,90 @@ class Graph:
                 del self._outgoing[u][v]
             del self._incoming[v]
         return v.element()
+
+    def __DFS_recursive(self, u, discovered, outgoing=True):
+        """Perform DFS of the undiscovered portion of the graph starting at
+        Vertex u.
+
+        discovered is a dictionary mapping each vertex to the edge that was
+        used to discover it during the Depth-First-Search process. (u should
+        be "discovered" prior to the call.)
+
+        Newly discovered vertices will be added to the dictionary as a res-
+        ult.
+        """
+        for e in self.incident_edges(u, outgoing):
+            v = e.opposite(u)
+            if v not in discovered:
+                discovered[v] = e
+                self.__DFS_recursive(v, discovered, outgoing)
+
+    def __DFS(self, u, outgoing=True):
+        """Helper function to return a Python dictionary mapping each vertex
+        to the edge that was used to discover it during the DFS process star-
+        ting from vertex u.
+        """
+        discovered = {u:None}
+        self.__DFS_recursive(u, discovered, outgoing)
+        return discovered
+
+    def path(self, u, v):
+        """
+        Return the path from u to v (Suppose that u and v are distinct).
+        """
+        self._validate_vertex(u)
+        self._validate_vertex(v)
+        discovered = self.__DFS(u)
+        path_ = []   # empty path by default
+        if (v is not u) and (v in discovered):
+            path_.append(v)
+            walk = v
+            while walk is not u:
+                e = discovered[walk]  # find edge leading to walk
+                parent = e.opposite(walk)
+                path_.append(parent)
+                walk = parent
+            path_.reverse()  # reorient path from u to v
+        return path_
+
+    def is_connected(self):  # O(n+m)
+        """Return True if the graph is connected (for undirected graphs) or
+        strongly connected (for directed graphs); False otherwise."""
+        vertex_count = self.vertex_count()
+        if vertex_count < 2:
+            return True
+        v = random.choice(list(self.vertices())) # choose an arbitrary vertex
+        discovered = self.__DFS(v)
+        if not self.is_directed():
+            return len(discovered) == vertex_count
+        elif len(discovered) != vertex_count: # for directed graph
+                return False
+        else:
+            discovered = self.__DFS(v, False)
+            return len(discovered) == vertex_count
+
+    def DFS_complete(self):
+        """Perform DFS for entire graph and return forest as a dictionary.
+
+        Return maps each vertex v to the edge that was used to discover it.
+        (Vertices that are roots of a DFS tree are mapped to None.)
+
+        For undirected graphs, the returned discovery dictionary represents a
+        DFS forest for the entire graph.
+
+        NOTE: this method is not of much use for directed graphs for now as
+        a result of the complexity for finding strongly connected components
+        of a directed graph. However, there does exist an approach for com-
+        puting those components in O(n+m) time, making use of two separate
+        DFS traversals.
+        """
+        if self.is_directed:
+            raise NotImplementedError("Support for finding strongly connected"
+                " components of directed graphs not implemented")
+        forest = {}
+        for v in self.vertices():
+            if v not in forest:
+                forest[v] = None
+                self.__DFS_recursive(v, forest)
+        return forest
+
