@@ -223,7 +223,7 @@ class Graph:
         self._validate_vertex(v)
         discovered = self.__DFS(u)
         path_ = []   # empty path by default
-        if (v is not u) and (v in discovered):
+        if v in discovered:
             path_.append(v)
             walk = v
             while walk is not u:
@@ -240,17 +240,17 @@ class Graph:
         vertex_count = self.vertex_count()
         if vertex_count < 2:
             return True
-        v = random.choice(list(self.vertices())) # choose an arbitrary vertex
+        v = random.choice(tuple(self.vertices())) # choose an arbitrary vertex
         discovered = self.__DFS(v)
         if not self.is_directed():
             return len(discovered) == vertex_count
         elif len(discovered) != vertex_count: # for directed graph
-                return False
+            return False
         else:
             discovered = self.__DFS(v, False)
             return len(discovered) == vertex_count
 
-    def DFS_complete(self):
+    def dfs_complete(self):
         """Perform DFS for entire graph and return forest as a dictionary.
 
         Return maps each vertex v to the edge that was used to discover it.
@@ -265,9 +265,9 @@ class Graph:
         puting those components in O(n+m) time, making use of two separate
         DFS traversals.
         """
-        if self.is_directed:
-            raise NotImplementedError("Support for finding strongly connected"
-                " components of directed graphs not implemented")
+        if self.is_directed():
+            raise NotImplementedError("Support for directed graphs not imple"
+                "mented")
         forest = {}
         for v in self.vertices():
             if v not in forest:
@@ -275,3 +275,33 @@ class Graph:
                 self.__DFS_recursive(v, forest)
         return forest
 
+    def __is_cyclic_by_DFS(self, u, discovered, tag, group):
+        """Helper method to determine whether the graph is cyclic."""
+        for e in self.incident_edges(u):
+            v = e.opposite(u)
+            if v not in discovered:
+                discovered[v] = (tag, group, e)
+                if self.__is_cyclic_by_DFS(v, discovered, tag + 1, group):
+                    return True
+            else:
+                tag_u, group_u, _ = discovered[u]
+                tag_v, group_v, _ = discovered[v]
+                if group_u == group_v:
+                    if self.is_directed() and tag_u > tag_v:
+                        return True
+                    elif not self.is_directed() and (tag_u > tag_v + 1):
+                        return True
+        return False
+
+    def is_cyclic(self):
+        """Returns True if the graph is cyclic; False if it is acyclic."""
+        forest = {}
+        group = -1
+        for v in self.vertices():
+            if v not in forest:
+                group += 1
+                tag = 0
+                forest[v] = (tag, group, None)
+                if self.__is_cyclic_by_DFS(v, forest, tag + 1, group):
+                    return True
+        return False
