@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict
 
 class Graph:
     """Representation of a simple graph using a adjacency map."""
@@ -50,6 +51,11 @@ class Graph:
         def element(self):
             """Return element associated with this edge."""
             return self._element
+
+        def expire(self):
+            """Removing this edge: mark its expiration and help garbage colle-
+            ction."""
+            self._origin = self._destination = self._element = None
 
         def __hash__(self): # will allow edge to be a map/set key
             return hash( (self._origin, self._destination) )
@@ -154,11 +160,6 @@ class Graph:
         self._incoming[v][u] = e
         return e
 
-    def __expire_edge(self, e):
-        """Helper function for removing edge e: mark its expiration and help
-        garbage collection."""
-        e._origin = e._destination = e._element = None
-
     def remove_edge(self, e): # O(1) expected
         """Remove and return element of edge e from the graph."""
         if not isinstance(e, Graph.Edge):
@@ -169,7 +170,7 @@ class Graph:
         del self._outgoing[u][v]
         del self._incoming[v][u]
         result = e.element()
-        self.__expire_edge(e)
+        e.expire()
         return result
 
     def remove_vertex(self, v): # O(degree(v))
@@ -178,24 +179,26 @@ class Graph:
         directed = self.is_directed()
         for u in self._outgoing[v].keys():
             e = self._incoming[u][v]
-            self.__expire_edge(e)
+            e.expire()
             del self._incoming[u][v]
         del self._outgoing[v]
         if directed:
             for u in self._incoming[v].keys():
                 e = self._outgoing[u][v]
-                self.__expire_edge(e)
+                e.expire()
                 del self._outgoing[u][v]
             del self._incoming[v]
         return v.element()
 
-    def __DFS_recursive(self, u, discovered, outgoing=True):
+    def __DFS_recursive(self, u, discovered, tag=0, group=0, outgoing=True):
         """Perform DFS of the undiscovered portion of the graph starting at
         Vertex u.
 
-        discovered is a dictionary mapping each vertex to the edge that was
-        used to discover it during the Depth-First-Search process. (u should
-        be "discovered" prior to the call.)
+        discovered is a dictionary mapping each vertex to a tuple of the form
+        (tag, group, edge), where edge denote the edge that was used to dis-
+        cover the vertex during the Depth-First-Search process. The two other
+        fields tag and group maintains additional bookkeeping information.
+        (u should be "discovered" prior to the call.)
 
         Newly discovered vertices will be added to the dictionary as a res-
         ult.
@@ -203,19 +206,19 @@ class Graph:
         for e in self.incident_edges(u, outgoing):
             v = e.opposite(u)
             if v not in discovered:
-                discovered[v] = e
-                self.__DFS_recursive(v, discovered, outgoing)
+                discovered[v] = (tag+1, group, e)
+                self.__DFS_recursive(v, discovered, tag+1, group, outgoing)
 
     def __DFS(self, u, outgoing=True):
         """Helper function to return a Python dictionary mapping each vertex
         to the edge that was used to discover it during the DFS process star-
         ting from vertex u.
         """
-        discovered = {u:None}
-        self.__DFS_recursive(u, discovered, outgoing)
-        return discovered
+        discovered = {u:(0, 0, None)}
+        self.__DFS_recursive(u, discovered, 0, 0, outgoing)
+        return {k:v[-1] for k, v in discovered.items()}
 
-    def path(self, u, v):
+    def path_by_DFS(self, u, v):
         """
         Return the path from u to v (Suppose that u and v are distinct).
         """
@@ -234,9 +237,10 @@ class Graph:
             path_.reverse()  # reorient path from u to v
         return path_
 
-    def is_connected(self):  # O(n+m)
+    def is_connected_by_DFS(self):  # O(n+m)
         """Return True if the graph is connected (for undirected graphs) or
-        strongly connected (for directed graphs); False otherwise."""
+        strongly connected (for directed graphs); False otherwise.
+        """
         vertex_count = self.vertex_count()
         if vertex_count < 2:
             return True
@@ -250,38 +254,48 @@ class Graph:
             discovered = self.__DFS(v, False)
             return len(discovered) == vertex_count
 
-    def dfs_complete(self):
-        """Perform DFS for entire graph and return forest as a dictionary.
+    def connected_components_by_DFS(self):
+        """Perform DFS for entire graph and return its largest connected
+        component (or one of them) as a dictionary.
 
         Return maps each vertex v to the edge that was used to discover it.
         (Vertices that are roots of a DFS tree are mapped to None.)
 
-        For undirected graphs, the returned discovery dictionary represents a
-        DFS forest for the entire graph.
-
-        NOTE: this method is not of much use for directed graphs for now as
-        a result of the complexity for finding strongly connected components
-        of a directed graph. However, there does exist an approach for com-
-        puting those components in O(n+m) time, making use of two separate
+        NOTE: For directed graphs, as a result of the complexity for finding
+        strongly connected components of a directed graph, this method is
+        not implemented for now. However, there does exist an approach for
+        computing those components in O(n+m) time, making use of two separate
         DFS traversals.
         """
         if self.is_directed():
             raise NotImplementedError("Support for directed graphs not imple"
                 "mented")
-        forest = {}
-        for v in self.vertices():
-            if v not in forest:
-                forest[v] = None
-                self.__DFS_recursive(v, forest)
-        return forest
+        else:
+            forest = {}
+            group = -1
+            for v in self.vertices():
+                if v not in forest:
+                    group += 1
+                    tag = 0
+                    forest[v] = (tag, group, None)
+                    self.__DFS_recursive(v, forest, tag, group)
+            by_group = defaultdict(dict)
+            for vertex, (tag, group, edge) in forest.items():
+                by_group[group][vertex] = edge
+            connected_component = {}
+            for group in by_group:
+                subg = by_group[group]
+                if len(subg) > len(connected_component):
+                    connected_component = subg
+            return connected_component
 
     def __is_cyclic_by_DFS(self, u, discovered, tag, group):
         """Helper method to determine whether the graph is cyclic."""
         for e in self.incident_edges(u):
             v = e.opposite(u)
             if v not in discovered:
-                discovered[v] = (tag, group, e)
-                if self.__is_cyclic_by_DFS(v, discovered, tag + 1, group):
+                discovered[v] = (tag+1, group, e)
+                if self.__is_cyclic_by_DFS(v, discovered, tag+1, group):
                     return True
             else:
                 tag_u, group_u, _ = discovered[u]
@@ -293,8 +307,8 @@ class Graph:
                         return True
         return False
 
-    def is_cyclic(self):
-        """Returns True if the graph is cyclic; False if it is acyclic."""
+    def is_cyclic_by_DFS(self):
+        """Return True if the graph is cyclic; False if it is acyclic."""
         forest = {}
         group = -1
         for v in self.vertices():
@@ -302,6 +316,74 @@ class Graph:
                 group += 1
                 tag = 0
                 forest[v] = (tag, group, None)
-                if self.__is_cyclic_by_DFS(v, forest, tag + 1, group):
+                if self.__is_cyclic_by_DFS(v, forest, tag, group):
                     return True
         return False
+
+    def __BFS_recursive(self, s, discovered, outgoing=True):
+        """Perform Bread-First-Search of the undiscovered portion of Graph g
+        starting at vertex s.
+
+        discovered is a dictionary mapping each vertex to the edge that was
+        used to discover it during the BFS process (s should be mapped to None
+        prior to the call).
+
+        Newly discovered vertices will be added to the dictionary as a result.
+        """
+        level = [s]             # first level includes only s
+        while len(level) > 0:
+            next_level = []     # prepare to gather newly found vertices
+            for u in level:
+                for e in self.incident_edges(u, outgoing):
+                    v = e.opposite(u)
+                    if v not in discovered:
+                        discovered[v] = e
+                        next_level.append(v)
+            level = next_level
+
+    def __BFS(self, u, outgoing=True):
+        """Helper function to return a Python dictionary mapping each vertex
+        to the edge that was used to discover it during the DFS process star-
+        ting from vertex u.
+        """
+        discovered = {u: None}
+        self.__BFS_recursive(u, discovered, outgoing)
+        return discovered
+
+    def path_by_BFS(self, u, v):
+        """
+        Return the path from u to v (Suppose that u and v are distinct) using
+        breadth-first-search.
+        """
+        self._validate_vertex(u)
+        self._validate_vertex(v)
+        discovered = self.__BFS(u)
+        path_ = []   # empty path by default
+        if v in discovered:
+            path_.append(v)
+            walk = v
+            while walk is not u:
+                e = discovered[walk]  # find edge leading to walk
+                parent = e.opposite(walk)
+                path_.append(parent)
+                walk = parent
+            path_.reverse()  # reorient path from u to v
+        return path_
+
+    def is_connected_by_BFS(self):
+        """Return True if the graph is connected (for undirected graphs) or
+        strongly connected (for directed graphs); False otherwise.
+        """
+        vertex_count = self.vertex_count()
+        if vertex_count < 2:
+            return True
+        v = random.choice(tuple(self.vertices())) # choose an arbitrary vertex
+        discovered = self.__BFS(v)
+        if not self.is_directed():
+            return len(discovered) == vertex_count
+        elif len(discovered) != vertex_count: # for directed graph
+            return False
+        else:
+            discovered = self.__BFS(v, False)
+            return len(discovered) == vertex_count
+
