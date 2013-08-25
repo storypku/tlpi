@@ -386,4 +386,3 @@ class Graph:
         else:
             discovered = self.__BFS(v, False)
             return len(discovered) == vertex_count
-
