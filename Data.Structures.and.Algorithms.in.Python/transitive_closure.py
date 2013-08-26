@@ -1,6 +1,6 @@
 from copy import deepcopy
 from graph import Graph
-def floyd_warshall(g):  # O(n+m)
+def floyd_warshall(g):  # O(n**3)
     """Return a new graph that is the transitive closure of g."""
     closure = deepcopy(g)
     verts = list(closure.vertices())    # make indexable list
