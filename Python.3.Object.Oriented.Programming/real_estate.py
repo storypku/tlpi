@@ -181,4 +181,13 @@ class Agent:
         for property_ in self.property_list:
             property_.display()
 
+    def add_property(self):
+        property_type = get_valid_input("what type of property? ",
+            ("house", "apartment")).lower()
+        payment_type = get_valid_input("What payment type? ",
+            ("purchase", "rental")).lower()
+
+        PropertyClass = self.type_map[(property_type, payment_type)]
+        init_args = PropertyClass.prompt_init()
+        self.property_list.append(PropertyClass(**init_args))
 
