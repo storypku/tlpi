@@ -41,9 +41,11 @@ main(int argc, char *argv[])
     if (fstat(fdSrc, &sb) == -1)
         errExit("fstat");
 
-    src = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fdSrc, 0);
-    if (src == MAP_FAILED)
-        errExit("mmap");
+    if(sb.st_size != 0) {
+        src = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fdSrc, 0);
+        if (src == MAP_FAILED)
+            errExit("mmap");
+    }
 
     if(close(fdSrc) == -1)
         errExit("close");
@@ -52,19 +54,22 @@ main(int argc, char *argv[])
     if (fdDst == -1)
         errExit("open");
 
-    if (ftruncate(fdDst, sb.st_size) == -1)
-        errExit("ftruncate");
+    if (sb.st_size != 0) {
+        if (ftruncate(fdDst, sb.st_size) == -1)
+            errExit("ftruncate");
 
-    dst = mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fdDst, 0);
-    if (dst == MAP_FAILED)
-        errExit("mmap");
+        dst = mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fdDst, 0);
+        if (dst == MAP_FAILED)
+            errExit("mmap");
+
+
+        memcpy(dst, src, sb.st_size);       /* Copy bytes between mappings */
+        if (msync(dst, sb.st_size, MS_SYNC) == -1)
+            errExit("msync");
+    }
 
     if(close(fdDst) == -1)
         errExit("close");
-
-    memcpy(dst, src, sb.st_size);       /* Copy bytes between mappings */
-    if (msync(dst, sb.st_size, MS_SYNC) == -1)
-        errExit("msync");
 
     exit(EXIT_SUCCESS);
 }
