@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 
     msgh.msg_control = control_un.control;
     msgh.msg_controllen = sizeof(control_un.control);
-    printf("msgh.msg_controllen: %ld\n", msgh.msg_controllen);
+    fprintf(stderr, "msgh.msg_controllen: %ld\n", msgh.msg_controllen);
     fprintf(stderr, "Sending fds:\n"
                     "   ");
     for(i=0; i < N_FDS; i++)
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 
     cmhp = CMSG_FIRSTHDR(&msgh);
     cmhp->cmsg_len = CMSG_LEN(N_FDS * sizeof(int));
-    printf("cmhp->cmsg_len: %ld\n", (long) cmhp->cmsg_len);
+    fprintf(stderr, "cmhp->cmsg_len: %ld\n", (long) cmhp->cmsg_len);
     cmhp->cmsg_level = SOL_SOCKET;
     cmhp->cmsg_type = SCM_RIGHTS;
     fdhdr = (int *) CMSG_DATA(cmhp);
